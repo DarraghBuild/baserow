@@ -19,3 +19,9 @@ ERROR_HOSTNAME_IS_NOT_ALLOWED = (
     HTTP_400_BAD_REQUEST,
     "Only the hostname of the web frontend is allowed.",
 )
+
+ERROR_MODIFYING_SUPER_ADMIN = (
+    "ERROR_MODIFYING_SUPER_ADMIN",
+    HTTP_400_BAD_REQUEST,
+    "Modifying group membership/permissions for a super admin user is not allowed.",
+)

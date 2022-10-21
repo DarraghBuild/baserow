@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.conf import settings
 
 from drf_spectacular.openapi import OpenApiParameter, OpenApiTypes
 from drf_spectacular.utils import extend_schema
@@ -9,6 +10,7 @@ from rest_framework.views import APIView
 from baserow.api.decorators import map_exceptions, validate_body
 from baserow.api.errors import (
     ERROR_GROUP_DOES_NOT_EXIST,
+    ERROR_MODIFYING_SUPER_ADMIN,
     ERROR_USER_INVALID_GROUP_PERMISSIONS,
     ERROR_USER_NOT_IN_GROUP,
 )
@@ -17,6 +19,7 @@ from baserow.api.schemas import get_error_schema
 from baserow.core.exceptions import (
     GroupDoesNotExist,
     GroupUserDoesNotExist,
+    ModifySuperAdminError,
     UserInvalidGroupPermissionsError,
     UserNotInGroup,
 )
@@ -97,6 +100,7 @@ class GroupUserView(APIView):
                     "ERROR_USER_NOT_IN_GROUP",
                     "ERROR_USER_INVALID_GROUP_PERMISSIONS",
                     "ERROR_REQUEST_BODY_VALIDATION",
+                    "ERROR_MODIFYING_SUPER_ADMIN",
                 ]
             ),
             404: get_error_schema(["ERROR_GROUP_USER_DOES_NOT_EXIST"]),
@@ -109,6 +113,7 @@ class GroupUserView(APIView):
             GroupUserDoesNotExist: ERROR_GROUP_USER_DOES_NOT_EXIST,
             UserNotInGroup: ERROR_USER_NOT_IN_GROUP,
             UserInvalidGroupPermissionsError: ERROR_USER_INVALID_GROUP_PERMISSIONS,
+            ModifySuperAdminError: ERROR_MODIFYING_SUPER_ADMIN,
         }
     )
     def patch(self, request, data, group_user_id):
@@ -118,6 +123,10 @@ class GroupUserView(APIView):
             group_user_id,
             base_queryset=GroupUser.objects.select_for_update(of=("self",)),
         )
+
+        if group_user.user.email in settings.SUPER_ADMINS:
+            raise ModifySuperAdminError(group_user.user.email)
+
         group_user = CoreHandler().update_group_user(request.user, group_user, **data)
         return Response(GroupUserSerializer(group_user).data)
 
@@ -139,7 +148,11 @@ class GroupUserView(APIView):
         responses={
             204: None,
             400: get_error_schema(
-                ["ERROR_USER_NOT_IN_GROUP", "ERROR_USER_INVALID_GROUP_PERMISSIONS"]
+                [
+                    "ERROR_USER_NOT_IN_GROUP",
+                    "ERROR_USER_INVALID_GROUP_PERMISSIONS",
+                    "ERROR_MODIFYING_SUPER_ADMIN",
+                ]
             ),
             404: get_error_schema(["ERROR_GROUP_INVITATION_DOES_NOT_EXIST"]),
         },
@@ -150,6 +163,7 @@ class GroupUserView(APIView):
             GroupUserDoesNotExist: ERROR_GROUP_USER_DOES_NOT_EXIST,
             UserNotInGroup: ERROR_USER_NOT_IN_GROUP,
             UserInvalidGroupPermissionsError: ERROR_USER_INVALID_GROUP_PERMISSIONS,
+            ModifySuperAdminError: ERROR_MODIFYING_SUPER_ADMIN,
         }
     )
     def delete(self, request, group_user_id):
@@ -159,5 +173,9 @@ class GroupUserView(APIView):
             group_user_id,
             base_queryset=GroupUser.objects.select_for_update(of=("self",)),
         )
+
+        if group_user.user.email in settings.SUPER_ADMINS:
+            raise ModifySuperAdminError(group_user.user.email)
+
         CoreHandler().delete_group_user(request.user, group_user)
         return Response(status=204)

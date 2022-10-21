@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Exists, OuterRef
+from django.conf import settings
 
 from drf_spectacular.openapi import OpenApiParameter, OpenApiTypes
 from drf_spectacular.utils import extend_schema
@@ -14,6 +15,7 @@ from baserow.api.errors import (
     BAD_TOKEN_SIGNATURE,
     ERROR_GROUP_DOES_NOT_EXIST,
     ERROR_HOSTNAME_IS_NOT_ALLOWED,
+    ERROR_MODIFYING_SUPER_ADMIN,
     ERROR_USER_INVALID_GROUP_PERMISSIONS,
     ERROR_USER_NOT_IN_GROUP,
 )
@@ -30,6 +32,7 @@ from baserow.core.exceptions import (
     GroupInvitationDoesNotExist,
     GroupInvitationEmailMismatch,
     GroupUserAlreadyExists,
+    ModifySuperAdminError,
     UserInvalidGroupPermissionsError,
     UserNotInGroup,
 )
@@ -207,6 +210,7 @@ class GroupInvitationView(APIView):
                     "ERROR_USER_NOT_IN_GROUP",
                     "ERROR_USER_INVALID_GROUP_PERMISSIONS",
                     "ERROR_REQUEST_BODY_VALIDATION",
+                    "ERROR_MODIFYING_SUPER_ADMIN",
                 ]
             ),
             404: get_error_schema(["ERROR_GROUP_INVITATION_DOES_NOT_EXIST"]),
@@ -219,6 +223,7 @@ class GroupInvitationView(APIView):
             GroupInvitationDoesNotExist: ERROR_GROUP_INVITATION_DOES_NOT_EXIST,
             UserNotInGroup: ERROR_USER_NOT_IN_GROUP,
             UserInvalidGroupPermissionsError: ERROR_USER_INVALID_GROUP_PERMISSIONS,
+            ModifySuperAdminError: ERROR_MODIFYING_SUPER_ADMIN,
         }
     )
     def patch(self, request, data, group_invitation_id):
@@ -228,9 +233,14 @@ class GroupInvitationView(APIView):
             group_invitation_id,
             base_queryset=GroupInvitation.objects.select_for_update(of=("self",)),
         )
+
+        if group_invitation.email in settings.SUPER_ADMINS:
+            raise ModifySuperAdminError(group_invitation.email)
+
         group_invitation = CoreHandler().update_group_invitation(
             request.user, group_invitation, **data
         )
+
         return Response(GroupInvitationSerializer(group_invitation).data)
 
     @extend_schema(
@@ -252,7 +262,11 @@ class GroupInvitationView(APIView):
         responses={
             204: None,
             400: get_error_schema(
-                ["ERROR_USER_NOT_IN_GROUP", "ERROR_USER_INVALID_GROUP_PERMISSIONS"]
+                [
+                    "ERROR_USER_NOT_IN_GROUP",
+                    "ERROR_USER_INVALID_GROUP_PERMISSIONS",
+                    "ERROR_MODIFYING_SUPER_ADMIN",
+                ]
             ),
             404: get_error_schema(["ERROR_GROUP_INVITATION_DOES_NOT_EXIST"]),
         },
@@ -263,6 +277,7 @@ class GroupInvitationView(APIView):
             GroupInvitationDoesNotExist: ERROR_GROUP_INVITATION_DOES_NOT_EXIST,
             UserNotInGroup: ERROR_USER_NOT_IN_GROUP,
             UserInvalidGroupPermissionsError: ERROR_USER_INVALID_GROUP_PERMISSIONS,
+            ModifySuperAdminError: ERROR_MODIFYING_SUPER_ADMIN,
         }
     )
     def delete(self, request, group_invitation_id):
@@ -272,6 +287,10 @@ class GroupInvitationView(APIView):
             group_invitation_id,
             base_queryset=GroupInvitation.objects.select_for_update(of=("self",)),
         )
+
+        if group_invitation.email in settings.SUPER_ADMINS:
+            raise ModifySuperAdminError(group_invitation.email)
+        
         CoreHandler().delete_group_invitation(request.user, group_invitation)
         return Response(status=204)
 

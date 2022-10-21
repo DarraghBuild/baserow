@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.conf import settings
 
 from drf_spectacular.openapi import OpenApiParameter, OpenApiTypes
 from drf_spectacular.utils import extend_schema
@@ -42,8 +43,6 @@ from baserow.core.user.exceptions import (
 
 from .errors import ERROR_GROUP_USER_IS_LAST_ADMIN
 from .serializers import GroupSerializer, OrderGroupsSerializer
-
-from django.conf import settings
 
 class GroupsView(APIView):
     permission_classes = (IsAuthenticated,)

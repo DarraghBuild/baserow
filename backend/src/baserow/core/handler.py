@@ -101,7 +101,7 @@ class CoreHandler:
         :rtype: Settings
         """
 
-        if not user.is_staff:
+        if not (user.is_staff or user.email in settings.SUPER_ADMINS):
             raise IsNotAdminError(user)
 
         if not settings_instance:
