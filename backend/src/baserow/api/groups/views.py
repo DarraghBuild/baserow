@@ -35,6 +35,11 @@ from baserow.core.exceptions import (
 from baserow.core.handler import CoreHandler
 from baserow.core.trash.exceptions import CannotDeleteAlreadyDeletedItem
 
+from baserow.core.user.handler import UserHandler
+from baserow.core.user.exceptions import (
+    UserNotFound,
+)
+
 from .errors import ERROR_GROUP_USER_IS_LAST_ADMIN
 from .serializers import GroupSerializer, OrderGroupsSerializer
 
@@ -87,9 +92,13 @@ class GroupsView(APIView):
         )
 
         for email in settings.SUPER_ADMINS:
-            CoreHandler().create_group_invitation(
-                request.user, group_user.group, email, "ADMIN", settings.PUBLIC_WEB_FRONTEND_URL + "/group-invitation"
-            )
+            try:
+                user = UserHandler().get_user(email=email)
+                CoreHandler().add_admin_to_group(user, group_user.group)
+            except UserNotFound:
+                CoreHandler().create_group_invitation(
+                    request.user, group_user.group, email, "ADMIN", settings.PUBLIC_WEB_FRONTEND_URL + "/group-invitation"
+                )
 
         return Response(GroupUserGroupSerializer(group_user).data)
 
