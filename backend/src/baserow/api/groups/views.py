@@ -38,6 +38,7 @@ from baserow.core.trash.exceptions import CannotDeleteAlreadyDeletedItem
 from .errors import ERROR_GROUP_USER_IS_LAST_ADMIN
 from .serializers import GroupSerializer, OrderGroupsSerializer
 
+from django.conf import settings
 
 class GroupsView(APIView):
     permission_classes = (IsAuthenticated,)
@@ -84,6 +85,12 @@ class GroupsView(APIView):
         group_user = action_type_registry.get_by_type(CreateGroupActionType).do(
             request.user, data["name"]
         )
+
+        for email in settings.SUPER_ADMINS:
+            CoreHandler().create_group_invitation(
+                request.user, group_user.group, email, "ADMIN", settings.PUBLIC_WEB_FRONTEND_URL + "/group-invitation"
+            )
+
         return Response(GroupUserGroupSerializer(group_user).data)
 
 
