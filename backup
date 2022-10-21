@@ -1,0 +1,175 @@
+#!/usr/bin/env python3
+
+import os, argparse, datetime, re, subprocess, requests
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+BACKUP_DIR = "db_backups"
+DAILY_BACKUPS = 7
+DAILY_SNAPSHOTS = 14
+API_URL = "https://fergtable.com/api"
+ISO_DATE_PATTERN = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
+
+# create backups dir
+if not os.path.isdir(os.path.join(SCRIPT_DIR, BACKUP_DIR)):
+    os.mkdir(os.path.join(SCRIPT_DIR, BACKUP_DIR))
+
+def backup(args):
+    # create a backup with pg_dump named with the current date
+    os.chdir(SCRIPT_DIR)
+    fn = f"backup_{datetime.date.today().isoformat()}.tar"
+    files = filter(lambda x : x.endswith(".tar"), os.listdir(BACKUP_DIR))
+    i = 0
+    while fn in files:
+        i += 1
+        fn = f"backup_{datetime.date.today().isoformat()}_{i}.tar"
+
+    print(subprocess.run(f"""
+        docker compose down
+        docker compose up db -d
+        sleep 1
+        docker exec baserow-db-1 bash -c "pg_dump baserow -U baserow -F t -f {fn}"
+        docker cp baserow-db-1:{fn} {os.path.join(BACKUP_DIR, "")}
+        docker exec baserow-db-1 bash -c "rm {fn}"
+        docker compose down
+    """, capture_output=True, shell=True).stderr.decode("utf-8"))
+
+    print(f"Saved to backups/{fn}")
+
+    if args.restart:
+        subprocess.run("docker compose up -d", shell=True)
+
+def restore(args):
+    # restore the given backup with pg_restore
+    restore_file = os.path.abspath(args.file)
+    os.chdir(SCRIPT_DIR)
+
+    print(subprocess.run(f"""
+        docker compose down
+        docker compose up db -d
+        sleep 1
+        docker cp "{restore_file}" baserow-db-1:/
+        docker exec baserow-db-1 bash -c "dropdb baserow -U baserow && createdb baserow -U baserow && pg_restore {os.path.basename(restore_file)} -d baserow -U baserow -F t"
+        docker exec baserow-db-1 bash -c "rm -f {os.path.basename(restore_file)}"
+        docker compose down
+    """, capture_output=True, shell=True).stderr.decode("utf-8"))
+
+    print(f"Restored")
+
+    if args.restart:
+        subprocess.run("docker compose up -d", shell=True)
+
+def clean(args):
+    # delete backups older than DAILY_BACKUPS days, except for the first of each month
+    os.chdir(SCRIPT_DIR)
+    files = list(filter(lambda x : x.endswith(".tar"), os.listdir(BACKUP_DIR)))
+    today = datetime.date.today()
+    saved_months = set()
+    for file in files:
+        m = ISO_DATE_PATTERN.search(file)
+        if m:
+            date = datetime.date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+            if (today - date).days > DAILY_BACKUPS:
+                if m.group(0) not in saved_months and m.group(3) == "01":
+                    saved_months.add(m.group(0))
+                    continue
+
+                os.remove(os.path.join(BACKUP_DIR, file))
+
+def snapshot(args):
+    # create a snapshot of every database. authenticates as an admin user through the API
+    os.chdir(SCRIPT_DIR)
+    auth_vars = {}
+    if not os.path.isfile(".pass"):
+        print("Please create file .pass in script directory.")
+        return
+
+    with open(".pass", "r") as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith("#") or not line:
+                continue
+
+            key, value = line.split("=", 1)
+            if value[0] == value[-1] and (value[0] == "'" or value[0] == '"'):
+                value = value[1:-1]
+
+            auth_vars[key] = value
+
+    if "USER" not in auth_vars or "PASS" not in auth_vars:
+        print("Please provide USER and PASS env variables in .pass file.")
+        return
+
+    res = requests.post(API_URL + "/user/token-auth/", json={
+        "username": auth_vars["USER"],
+        "password": auth_vars["PASS"],
+    })
+
+    if res.status_code != 201:
+        print("Authentication failed")
+        print(res.text)
+        return
+
+    token = res.json()["token"]
+    headers = { "Authorization": "JWT " + token }
+
+    # accept any group invites
+    res = requests.get(API_URL + "/user/dashboard/", headers=headers)
+    invites = res.json()["group_invitations"]
+    for invite in invites:
+        requests.post(API_URL + f"/groups/invitations/{invite['id']}/accept/", headers=headers)
+
+    # get all databases
+    res = requests.get(API_URL + "/applications/", headers=headers)
+    apps = res.json()
+    today = datetime.date.today()
+    snapshot_name = f"snapshot_{today.isoformat()}"
+    for app in apps:
+        res = requests.get(API_URL + f"/snapshots/application/{app['id']}/", headers=headers)
+        snapshots = res.json()
+        has_today = False
+        # delete snapshots older than DAILY_SNAPSHOTS days, except for the first of each month
+        for snapshot in snapshots:
+            m = ISO_DATE_PATTERN.search(snapshot["created_at"])
+            date = datetime.date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+            if date == today:
+                has_today = True
+
+            if (today - date).days > DAILY_SNAPSHOTS and m.group(3) != "01":
+                requests.delete(API_URL + f"/snapshots/{snapshot['id']}/", headers=headers)
+
+        # create snapshot
+        if not has_today:
+            res = requests.post(API_URL + f"/snapshots/application/{app['id']}/", headers=headers, json={
+                "name": snapshot_name
+            })
+
+
+def get_file_arg(parser, fp: str) -> str:
+    if not os.path.isfile(fp):
+        parser.error("Cannot find the file specified.")
+    else:
+        return fp
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Baserow backup/restore utility. Backing up or restoring will stop the Baserow instance if it is running!")
+    subparsers = parser.add_subparsers()
+    subparsers.required = True
+
+    parser_backup = subparsers.add_parser("create", help="Create a new backup")
+    parser_backup.add_argument("-r", "--restart", help="Restart Baserow after completion", action="store_true", required=False, default=False)
+    parser_backup.set_defaults(func=backup)
+
+    parser_restore = subparsers.add_parser("restore", help="Restore from a backup")
+    parser_restore.add_argument("file", help="The backup file to restore from", type=lambda x : get_file_arg(parser, x))
+    parser_restore.add_argument("-r", "--restart", help="Restart Baserow after completion", action="store_true", required=False, default=False)
+    parser_restore.set_defaults(func=restore)
+
+    parser_clean = subparsers.add_parser("clean", help="Delete old backups")
+    parser_clean.set_defaults(func=clean)
+
+    parser_snapshot = subparsers.add_parser("snapshot", help="Update database snapshots in Baserow")
+    parser_snapshot.set_defaults(func=snapshot)
+
+    args = parser.parse_args()
+    args.func(args)
+
