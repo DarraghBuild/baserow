@@ -721,6 +721,8 @@ BASEROW_NOWAIT_FOR_LOCKS = not bool(
     os.getenv("BASEROW_WAIT_INSTEAD_OF_409_CONFLICT_ERROR", False)
 )
 
+SUPER_ADMINS = list(map(lambda s: s.strip(), os.getenv("SUPER_ADMINS", "").split(",")))
+
 # Indicates whether we are running the tests or not. Set to True in the test.py settings
 # file used by pytest.ini
 TESTS = False
