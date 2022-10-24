@@ -18,7 +18,7 @@ from django.utils import translation
 from itsdangerous import URLSafeSerializer
 from tqdm import tqdm
 
-from baserow.core.user.utils import normalize_email_address
+from baserow.core.user.utils import normalize_email_address, is_user_super_admin
 
 from .emails import GroupInvitationEmail
 from .exceptions import (
@@ -101,7 +101,7 @@ class CoreHandler:
         :rtype: Settings
         """
 
-        if not (user.is_staff or user.email in settings.SUPER_ADMINS):
+        if not (user.is_staff or is_user_super_admin(user)):
             raise IsNotAdminError(user)
 
         if not settings_instance:

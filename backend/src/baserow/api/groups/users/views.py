@@ -1,5 +1,4 @@
 from django.db import transaction
-from django.conf import settings
 
 from drf_spectacular.openapi import OpenApiParameter, OpenApiTypes
 from drf_spectacular.utils import extend_schema
@@ -25,6 +24,8 @@ from baserow.core.exceptions import (
 )
 from baserow.core.handler import CoreHandler
 from baserow.core.models import GroupUser
+
+from baserow.core.user.utils import is_user_super_admin
 
 from .serializers import GroupUserSerializer, UpdateGroupUserSerializer
 
@@ -124,7 +125,7 @@ class GroupUserView(APIView):
             base_queryset=GroupUser.objects.select_for_update(of=("self",)),
         )
 
-        if group_user.user.email in settings.SUPER_ADMINS:
+        if is_user_super_admin(group_user.user):
             raise ModifySuperAdminError(group_user.user.email)
 
         group_user = CoreHandler().update_group_user(request.user, group_user, **data)
@@ -174,7 +175,7 @@ class GroupUserView(APIView):
             base_queryset=GroupUser.objects.select_for_update(of=("self",)),
         )
 
-        if group_user.user.email in settings.SUPER_ADMINS:
+        if is_user_super_admin(group_user.user):
             raise ModifySuperAdminError(group_user.user.email)
 
         CoreHandler().delete_group_user(request.user, group_user)

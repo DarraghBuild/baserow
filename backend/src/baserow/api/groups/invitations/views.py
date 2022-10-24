@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Exists, OuterRef
-from django.conf import settings
+from baserow.core.user.utils import is_email_super_admin
 
 from drf_spectacular.openapi import OpenApiParameter, OpenApiTypes
 from drf_spectacular.utils import extend_schema
@@ -234,7 +234,7 @@ class GroupInvitationView(APIView):
             base_queryset=GroupInvitation.objects.select_for_update(of=("self",)),
         )
 
-        if group_invitation.email in settings.SUPER_ADMINS:
+        if is_email_super_admin(group_invitation.email):
             raise ModifySuperAdminError(group_invitation.email)
 
         group_invitation = CoreHandler().update_group_invitation(
@@ -288,7 +288,7 @@ class GroupInvitationView(APIView):
             base_queryset=GroupInvitation.objects.select_for_update(of=("self",)),
         )
 
-        if group_invitation.email in settings.SUPER_ADMINS:
+        if is_email_super_admin(group_invitation.email):
             raise ModifySuperAdminError(group_invitation.email)
         
         CoreHandler().delete_group_invitation(request.user, group_invitation)
