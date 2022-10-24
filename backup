@@ -6,7 +6,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 BACKUP_DIR = "db_backups"
 DAILY_BACKUPS = 7
 DAILY_SNAPSHOTS = 14
-PENDING_SNAPSHOT_SLEEP = 5
+PENDING_SNAPSHOT_SLEEP = 10
 API_URL = "https://fergtable.com/api"
 ISO_DATE_PATTERN = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
 
@@ -143,6 +143,8 @@ def snapshot(args):
                 if pending:
                     time.sleep(PENDING_SNAPSHOT_SLEEP)
 
+            time.sleep(2)
+            
             if res.status_code != 200:
                 print(f"Error {res.status_code}: {res.text}")
 
