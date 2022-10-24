@@ -14,10 +14,13 @@
         {{ $t('apiDocsComponent.selectApplicationTitle') }}
       </div>
       <APIDocsSelectDatabase />
-      <nuxt-link :to="{ name: 'dashboard' }" class="select-application__back">
-        <i class="fas fa-arrow-left"></i>
-        {{ $t('apiDocsComponent.back') }}
-      </nuxt-link>
+      <div class="bottom-links">
+        <nuxt-link :to="{ name: 'dashboard' }" class="select-application__back">
+          <i class="fas fa-arrow-left"></i>
+          {{ $t('apiDocsComponent.back') }}
+        </nuxt-link>
+        <a href="/api/redoc/" class="select-application__back">Baserow API spec</a>
+      </div>
       <SettingsModal ref="settingsModal"></SettingsModal>
     </template>
     <template v-else>
@@ -63,3 +66,10 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+.bottom-links {
+  display: flex;
+  justify-content: space-between;
+}
+</style>
