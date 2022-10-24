@@ -102,6 +102,10 @@ export default function CoreModule(options) {
           key: 'BASEROW_MAX_SNAPSHOTS_PER_GROUP',
           default: -1,
         },
+        {
+          key: 'SUPER_ADMINS',
+          default: '',
+        },
       ],
     },
   ])

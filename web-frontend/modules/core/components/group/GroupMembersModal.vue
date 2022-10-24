@@ -30,7 +30,7 @@
         :description="getUserDescription(user)"
         :permissions="user.permissions"
         :loading="user._.loading"
-        :disabled="user.email === username"
+        :disabled="user.email === username || isSuperAdmin(user)"
         @updated="updateUser(user, $event)"
         @removed="removeUser(user)"
       ></GroupMember>
@@ -43,6 +43,7 @@
         :description="getInvitationDescription(invitation)"
         :permissions="invitation.permissions"
         :loading="invitation._.loading"
+        :disabled="isSuperAdmin(invitation)"
         @updated="updateInvitation(invitation, $event)"
         @removed="removeInvitation(invitation)"
       ></GroupMember>
@@ -88,7 +89,14 @@ export default {
       invitations: [],
       loading: false,
       inviteLoading: false,
+      superAdmins: {},
     }
+  },
+  mounted() {
+    this.superAdmins = this.$env.SUPER_ADMINS.split(',').map((s) => s.trim()).reduce((acc, item) => {
+      acc[item] = true
+      return acc
+    }, {})
   },
   computed: {
     ...mapGetters({
@@ -260,6 +268,9 @@ export default {
         invitation._.loading = false
         notifyIf(error, 'group')
       }
+    },
+    isSuperAdmin(user) {
+      return user.email in this.superAdmins
     },
   },
 }

@@ -1,7 +1,6 @@
 <template>
   <div class="layout__col-2-scroll layout__col-2-scroll--white-background">
     <div class="dashboard">
-      <DashboardHelp></DashboardHelp>
       <GroupInvitation
         v-for="invitation in groupInvitations"
         :key="'invitation-' + invitation.id"

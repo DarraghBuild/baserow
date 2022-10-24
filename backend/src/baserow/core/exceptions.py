@@ -31,6 +31,12 @@ class UserInvalidGroupPermissionsError(Exception):
             **kwargs,
         )
 
+class ModifySuperAdminError(Exception):
+    """Raised when a user tries to modify permissions for a super admin user."""
+
+    def __init__(self, email, *args, **kwargs):
+        self.email = email
+        super().__init__(f"The user {email} is a super admin and cannot be modified.", *args, **kwargs)
 
 class GroupDoesNotExist(Exception):
     """Raised when trying to get a group that does not exist."""

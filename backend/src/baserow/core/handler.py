@@ -18,7 +18,7 @@ from django.utils import translation
 from itsdangerous import URLSafeSerializer
 from tqdm import tqdm
 
-from baserow.core.user.utils import normalize_email_address
+from baserow.core.user.utils import normalize_email_address, is_user_super_admin
 
 from .emails import GroupInvitationEmail
 from .exceptions import (
@@ -101,7 +101,7 @@ class CoreHandler:
         :rtype: Settings
         """
 
-        if not user.is_staff:
+        if not (user.is_staff or is_user_super_admin(user)):
             raise IsNotAdminError(user)
 
         if not settings_instance:
@@ -693,6 +693,35 @@ class CoreHandler:
         )
 
         invitation.delete()
+
+        return group_user
+
+    def add_admin_to_group(self, user, group):
+        """
+        Adds the user to the correct group with admin permissions.
+        If the user is already a member of the group then the
+        permissions are updated.
+
+        :param user: The user being added.
+        :type: user: User
+        :param group: The group to which the user is being added.
+        :type group: Group
+        :return: The group user relationship.
+        :rtype: GroupUser
+        """
+
+        group_user, created = GroupUser.objects.update_or_create(
+            user=user,
+            group=group,
+            defaults={
+                "order": GroupUser.get_last_order(user),
+                "permissions": "ADMIN",
+            },
+        )
+
+        group_user_added.send(
+            self, group_user_id=group_user.id, group_user=group_user, user=user
+        )
 
         return group_user
 
