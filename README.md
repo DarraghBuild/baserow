@@ -1,3 +1,17 @@
+## Fergtable
+
+This is a fork of Baserow. Here is what has been changed:
+
+* "Super Admins" can be specified by email in `.env`. These are users that get automatically added to every group with admin permissions and cannot be removed.
+
+### Deploying
+
+1. Copy `.env.defaults` to `.env` and fill in the required variables.
+1. Run `docker-compose up` (or `docker compose up`).
+1. If changes have been made to the source code, run with `--build` flag.
+
+Below is all of Baserow's README:
+
 ## Baserow is an open source no-code database tool and Airtable alternative.
 
 Create your own online database without technical experience. Our user-friendly no-code
