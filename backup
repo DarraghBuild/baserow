@@ -112,12 +112,6 @@ def snapshot(args):
     token = res.json()["token"]
     headers = { "Authorization": "JWT " + token }
 
-    # accept any group invites
-    res = requests.get(API_URL + "/user/dashboard/", headers=headers)
-    invites = res.json()["group_invitations"]
-    for invite in invites:
-        requests.post(API_URL + f"/groups/invitations/{invite['id']}/accept/", headers=headers)
-
     # get all databases
     res = requests.get(API_URL + "/applications/", headers=headers)
     apps = res.json()
