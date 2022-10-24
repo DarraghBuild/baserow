@@ -134,21 +134,17 @@ def snapshot(args):
 
         # create snapshot
         if not has_today:
-            res = requests.get(API_URL + "/jobs/", headers=headers)
-            jobs = filter_snapshot_jobs(res.json())
-            while len(jobs) > 0:
-                time.sleep(PENDING_SNAPSHOT_SLEEP)
-
-            res = requests.post(API_URL + f"/snapshots/application/{app['id']}/", headers=headers, json={
-                "name": snapshot_name
-            })
+            pending = True
+            while pending:
+                res = requests.post(API_URL + f"/snapshots/application/{app['id']}/", headers=headers, json={
+                    "name": snapshot_name
+                })
+                pending = res.status_code == 400 and res.json()["error"] == "ERROR_SNAPSHOT_OPERATION_LIMIT_EXCEEDED"
+                if pending:
+                    time.sleep(PENDING_SNAPSHOT_SLEEP)
 
             if res.status_code != 200:
                 print(f"Error {res.status_code}: {res.text}")
-
-def filter_snapshot_jobs(jobs):
-    # filter out jobs that are not pending snapshots
-    return list(filter(lambda x : x["type"] == "create_snapshot" and x["state"] == "pending", jobs))
 
 def get_file_arg(parser, fp: str) -> str:
     if not os.path.isfile(fp):
