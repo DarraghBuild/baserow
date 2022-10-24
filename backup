@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
-import os, argparse, datetime, re, subprocess, requests
+import os, argparse, datetime, re, subprocess, requests, time
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 BACKUP_DIR = "db_backups"
 DAILY_BACKUPS = 7
 DAILY_SNAPSHOTS = 14
+PENDING_SNAPSHOT_SLEEP = 5
 API_URL = "https://fergtable.com/api"
 ISO_DATE_PATTERN = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
 
@@ -133,10 +134,21 @@ def snapshot(args):
 
         # create snapshot
         if not has_today:
+            res = requests.get(API_URL + "/jobs/", headers=headers)
+            jobs = filter_snapshot_jobs(res.json())
+            while len(jobs) > 0:
+                time.sleep(PENDING_SNAPSHOT_SLEEP)
+
             res = requests.post(API_URL + f"/snapshots/application/{app['id']}/", headers=headers, json={
                 "name": snapshot_name
             })
 
+            if res.status_code != 200:
+                print(f"Error {res.status_code}: {res.text}")
+
+def filter_snapshot_jobs(jobs):
+    # filter out jobs that are not pending snapshots
+    return list(filter(lambda x : x["type"] == "create_snapshot" and x["state"] == "pending", jobs))
 
 def get_file_arg(parser, fp: str) -> str:
     if not os.path.isfile(fp):
