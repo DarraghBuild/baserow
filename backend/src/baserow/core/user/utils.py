@@ -14,8 +14,8 @@ def normalize_email_address(email):
 
     return unicodedata.normalize("NFKC", email).strip().lower()
 
-def is_user_super_admin(self, user):
-    return self.is_email_super_admin(user.email)
+def is_user_super_admin(user):
+    return is_email_super_admin(user.email)
 
-def is_email_super_admin(self, email):
+def is_email_super_admin(email):
     return email in settings.SUPER_ADMINS
