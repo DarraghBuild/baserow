@@ -42,7 +42,11 @@ from baserow.core.user.exceptions import (
 )
 
 from .errors import ERROR_GROUP_USER_IS_LAST_ADMIN
-from .serializers import GroupSerializer, OrderGroupsSerializer
+from .serializers import (
+    GroupSerializer,
+    OrderGroupsSerializer,
+    PermissionObjectSerializer,
+)
 
 class GroupsView(APIView):
     permission_classes = (IsAuthenticated,)
@@ -92,7 +96,7 @@ class GroupsView(APIView):
 
         for email in settings.SUPER_ADMINS:
             try:
-                user = UserHandler().get_user(email=email)
+                user = UserHandler().get_active_user(email=email)
                 CoreHandler().add_admin_to_group(user, group_user.group)
             except UserNotFound:
                 CoreHandler().create_group_invitation(
@@ -282,3 +286,47 @@ class GroupOrderView(APIView):
             request.user, data["groups"]
         )
         return Response(status=204)
+
+
+class GroupPermissionsView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="group_id",
+                location=OpenApiParameter.PATH,
+                type=OpenApiTypes.INT,
+                description="The group id we want the permission object for.",
+            ),
+        ],
+        tags=["Groups"],
+        operation_id="group_permissions",
+        description=(
+            "Returns a the permission data necessary to determine the permissions "
+            "of a specific user over a specific group. \n"
+            "See `core.handler.CoreHandler.get_permissions()` for more details."
+        ),
+        responses={
+            200: PermissionObjectSerializer(many=True),
+            404: get_error_schema(
+                ["ERROR_USER_NOT_IN_GROUP", "ERROR_GROUP_DOES_NOT_EXIST"]
+            ),
+        },
+    )
+    @map_exceptions(
+        {
+            GroupDoesNotExist: ERROR_GROUP_DOES_NOT_EXIST,
+            UserNotInGroup: ERROR_USER_NOT_IN_GROUP,
+        }
+    )
+    def get(self, request, group_id):
+        """
+        Returns the permission object for the given group.
+        """
+
+        group = CoreHandler().get_group(group_id)
+
+        permissions = CoreHandler().get_permissions(request.user, group=group)
+
+        return Response(permissions)

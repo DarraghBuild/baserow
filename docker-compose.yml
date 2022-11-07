@@ -11,6 +11,7 @@ version: "3.4"
 x-backend-variables: &backend-variables
   # Most users should only need to set these first four variables.
   SECRET_KEY: ${SECRET_KEY:?}
+  BASEROW_JWT_SIGNING_KEY: ${BASEROW_JWT_SIGNING_KEY:-}
   DATABASE_PASSWORD: ${DATABASE_PASSWORD:?}
   REDIS_PASSWORD: ${REDIS_PASSWORD:?}
   # If you manually change this line make sure you also change the duplicate line in
@@ -96,6 +97,7 @@ x-backend-variables: &backend-variables
   BASEROW_JOB_CLEANUP_INTERVAL_MINUTES:
   BASEROW_MAX_ROW_REPORT_ERROR_COUNT:
   BASEROW_JOB_SOFT_TIME_LIMIT:
+  BASEROW_FRONTEND_JOBS_POLLING_TIMEOUT_MS:
   BASEROW_INITIAL_CREATE_SYNC_TABLE_DATA_LIMIT:
   BASEROW_WEBHOOKS_ALLOW_PRIVATE_ADDRESS:
   BASEROW_WEBHOOKS_IP_BLACKLIST:
@@ -107,6 +109,7 @@ x-backend-variables: &backend-variables
   BASEROW_WEBHOOKS_MAX_PER_TABLE:
   BASEROW_WEBHOOKS_MAX_CALL_LOG_ENTRIES:
   BASEROW_WEBHOOKS_REQUEST_TIMEOUT_SECONDS:
+  BASEROW_PERMISSION_MANAGERS:
 
 services:
   # A caddy reverse proxy sitting in-front of all the services. Responsible for routing

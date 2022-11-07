@@ -6,16 +6,32 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from baserow.api.decorators import map_exceptions, validate_body
+from baserow.api.decorators import (
+    map_exceptions,
+    validate_body,
+    validate_query_parameters,
+)
 from baserow.api.errors import (
     ERROR_GROUP_DOES_NOT_EXIST,
     ERROR_MODIFYING_SUPER_ADMIN,
+    ERROR_INVALID_SORT_ATTRIBUTE,
+    ERROR_INVALID_SORT_DIRECTION,
     ERROR_USER_INVALID_GROUP_PERMISSIONS,
     ERROR_USER_NOT_IN_GROUP,
 )
-from baserow.api.groups.users.errors import ERROR_GROUP_USER_DOES_NOT_EXIST
+from baserow.api.exceptions import (
+    InvalidSortAttributeException,
+    InvalidSortDirectionException,
+)
+from baserow.api.groups.users.errors import (
+    ERROR_CANNOT_DELETE_YOURSELF_FROM_GROUP,
+    ERROR_GROUP_USER_DOES_NOT_EXIST,
+)
+from baserow.api.mixins import SearchableViewMixin, SortableViewMixin
 from baserow.api.schemas import get_error_schema
+from baserow.api.user.registries import member_data_registry
 from baserow.core.exceptions import (
+    CannotDeleteYourselfFromGroup,
     GroupDoesNotExist,
     GroupUserDoesNotExist,
     ModifySuperAdminError,
@@ -24,13 +40,21 @@ from baserow.core.exceptions import (
 )
 from baserow.core.handler import CoreHandler
 from baserow.core.models import GroupUser
+from baserow.core.operations import ListGroupUsersGroupOperationType
 
 from baserow.core.user.utils import is_user_super_admin
 
-from .serializers import GroupUserSerializer, UpdateGroupUserSerializer
+from .serializers import (
+    GetGroupUsersViewParamsSerializer,
+    GroupUserSerializer,
+    UpdateGroupUserSerializer,
+)
 
 
-class GroupUsersView(APIView):
+class GroupUsersView(APIView, SearchableViewMixin, SortableViewMixin):
+    search_fields = ["user__username", "user__email"]
+    sort_field_mapping = {"name": "user__username", "email": "user__email"}
+
     @extend_schema(
         parameters=[
             OpenApiParameter(
@@ -50,7 +74,12 @@ class GroupUsersView(APIView):
         responses={
             200: GroupUserSerializer(many=True),
             400: get_error_schema(
-                ["ERROR_USER_NOT_IN_GROUP", "ERROR_USER_INVALID_GROUP_PERMISSIONS"]
+                [
+                    "ERROR_USER_NOT_IN_GROUP",
+                    "ERROR_USER_INVALID_GROUP_PERMISSIONS",
+                    "ERROR_INVALID_SORT_DIRECTION",
+                    "ERROR_INVALID_SORT_ATTRIBUTE",
+                ]
             ),
             404: get_error_schema(["ERROR_GROUP_DOES_NOT_EXIST"]),
         },
@@ -60,17 +89,39 @@ class GroupUsersView(APIView):
             GroupDoesNotExist: ERROR_GROUP_DOES_NOT_EXIST,
             UserNotInGroup: ERROR_USER_NOT_IN_GROUP,
             UserInvalidGroupPermissionsError: ERROR_USER_INVALID_GROUP_PERMISSIONS,
+            InvalidSortDirectionException: ERROR_INVALID_SORT_DIRECTION,
+            InvalidSortAttributeException: ERROR_INVALID_SORT_ATTRIBUTE,
         }
     )
-    def get(self, request, group_id):
+    @validate_query_parameters(GetGroupUsersViewParamsSerializer)
+    def get(self, request, group_id, query_params):
         """Responds with a list of serialized users that are part of the group."""
 
+        search = query_params.get("search")
+        sorts = query_params.get("sorts")
+
         group = CoreHandler().get_group(group_id)
-        group.has_user(request.user, "ADMIN", True)
-        group_users = GroupUser.objects.filter(group=group).select_related(
+
+        CoreHandler().check_permissions(
+            request.user,
+            ListGroupUsersGroupOperationType.type,
+            group=group,
+            context=group,
+        )
+
+        qs = GroupUser.objects.filter(group=group).select_related(
             "group", "user", "user__profile"
         )
-        serializer = GroupUserSerializer(group_users, many=True)
+
+        qs = self.apply_search(search, qs)
+        qs = self.apply_sorts_or_default_sort(sorts, qs)
+
+        serializer = GroupUserSerializer(qs, many=True)
+        # Iterate over any registered `member_data_registry`
+        # member data types and annotate the response with it.
+        for data_type in member_data_registry.get_all():
+            data_type.annotate_serialized_data(group, serializer.data)
+
         return Response(serializer.data)
 
 
@@ -165,6 +216,7 @@ class GroupUserView(APIView):
             UserNotInGroup: ERROR_USER_NOT_IN_GROUP,
             UserInvalidGroupPermissionsError: ERROR_USER_INVALID_GROUP_PERMISSIONS,
             ModifySuperAdminError: ERROR_MODIFYING_SUPER_ADMIN,
+            CannotDeleteYourselfFromGroup: ERROR_CANNOT_DELETE_YOURSELF_FROM_GROUP,
         }
     )
     def delete(self, request, group_user_id):
