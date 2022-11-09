@@ -101,11 +101,11 @@ def snapshot(args):
         return
 
     res = requests.post(API_URL + "/user/token-auth/", json={
-        "username": auth_vars["USER"],
+        "email": auth_vars["USER"],
         "password": auth_vars["PASS"],
     })
 
-    if res.status_code != 201:
+    if res.status_code != 200:
         print("Authentication failed")
         print(res.text)
         return
