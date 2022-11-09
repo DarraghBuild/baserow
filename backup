@@ -110,7 +110,7 @@ def snapshot(args):
         print(res.text)
         return
 
-    token = res.json()["token"]
+    token = res.json()["access_token"]
     headers = { "Authorization": "JWT " + token }
 
     # get all databases
