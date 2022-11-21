@@ -529,6 +529,11 @@
   .grid-view__description-name {
     @extend %ellipsis;
 
+    span {
+      @extend %ellipsis;
+      display: block;
+    }
+
     user-select: none;
   }
 
