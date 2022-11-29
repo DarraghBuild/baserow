@@ -1,5 +1,6 @@
 rebuild.env
 .DS_Store
+.pass
 
 # Created by .ignore support plugin (hsz.mobi)
 ### Node template

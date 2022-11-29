@@ -24,15 +24,15 @@ def backup(args):
         i += 1
         fn = f"backup_{datetime.date.today().isoformat()}_{i}.tar"
 
-    #print(subprocess.run(f"""
-    #    docker compose down
-    #    docker compose up db -d
-    #    sleep 1
-    #    docker exec fergtable-db-1 bash -c "pg_dump baserow -U baserow -F t -f {fn}"
-    #    docker cp fergtable-db-1:{fn} {os.path.join(BACKUP_DIR, "")}
-    #    docker exec fergtable-db-1 bash -c "rm {fn}"
-    #    docker compose down
-    #""", capture_output=True, shell=True).stderr.decode("utf-8"))
+    print(subprocess.run(f"""
+        docker compose down
+        docker compose up db -d
+        sleep 1
+        docker exec fergtable-db-1 bash -c "pg_dump baserow -U baserow -F t -f {fn}"
+        docker cp fergtable-db-1:{fn} {os.path.join(BACKUP_DIR, "")}
+        docker exec fergtable-db-1 bash -c "rm {fn}"
+        docker compose down
+    """, capture_output=True, shell=True).stderr.decode("utf-8"))
 
     print(f"Saved to backups/{fn}")
 
