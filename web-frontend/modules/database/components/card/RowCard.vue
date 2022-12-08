@@ -96,7 +96,7 @@ export default {
         return null
       }
 
-      const image = value.find((file) => file.is_image)
+      const image = value.find((file) => !!file.thumbnails)
 
       if (image === undefined) {
         return null

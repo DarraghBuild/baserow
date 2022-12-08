@@ -1,3 +1,5 @@
+import mimetypes
+
 from django.core.files.storage import default_storage
 from django.core.management.base import BaseCommand
 
@@ -32,7 +34,7 @@ class Command(BaseCommand):
         i = 0
         handler = UserFileHandler()
         buffer_size = 100
-        queryset = UserFile.objects.filter(is_image=True)
+        queryset = UserFile.objects.all()
         count = queryset.count()
 
         while i < count:
@@ -41,20 +43,28 @@ class Command(BaseCommand):
                 i += 1
 
                 full_path = handler.user_file_path(user_file)
+                print(full_path)
+                mime_type = mimetypes.guess_type(full_path)[0]
                 stream = default_storage.open(full_path)
+                image = None
 
                 try:
                     image = Image.open(stream)
-                    handler.generate_and_save_image_thumbnails(
-                        image,
-                        user_file,
-                        storage=default_storage,
-                        only_with_name=options["name"],
-                    )
-                    image.close()
                 except IOError:
                     pass
 
+                handler.generate_and_save_file_thumbnails(
+                    stream,
+                    mime_type,
+                    image,
+                    user_file,
+                    storage=default_storage,
+                    only_with_name=options["name"],
+                )
+
                 stream.close()
+
+                if image:
+                    image.close()
 
         self.stdout.write(self.style.SUCCESS(f"{i} thumbnails have been regenerated."))

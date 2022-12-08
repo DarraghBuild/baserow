@@ -73,7 +73,7 @@
               @click="selected = index"
             >
               <img
-                v-if="file.is_image"
+                v-if="!!file.thumbnails"
                 :src="file.thumbnails.small.url"
                 class="file-field-modal__nav-image"
               />

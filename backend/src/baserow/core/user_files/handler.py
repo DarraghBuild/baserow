@@ -4,6 +4,7 @@ from io import BytesIO
 from os.path import join
 from typing import Optional
 from urllib.parse import urlparse
+from pdf2image import convert_from_bytes
 
 from django.conf import settings
 from django.core.files.storage import default_storage
@@ -26,6 +27,12 @@ from .exceptions import (
 )
 from .models import UserFile
 
+# all non-image file types which can have thumbnails generated
+THUMBNAIL_MIME_TYPES = set([
+    "application/pdf",
+    "application/vnd.ms-powerpoint"
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+])
 
 class UserFileHandler:
     def get_user_file_by_name(
@@ -77,6 +84,9 @@ class UserFileHandler:
         if isinstance(user_file_name, UserFile):
             user_file_name = user_file_name.name
 
+        if mimetypes.guess_type(user_file_name)[0] in THUMBNAIL_MIME_TYPES:
+            user_file_name = f"{'.'.join(user_file_name.split('.')[:-1])}.jpg"
+
         return join(settings.USER_THUMBNAILS_DIRECTORY, thumbnail_name, user_file_name)
 
     def generate_unique(self, sha256_hash, extension, length=32, max_tries=1000):
@@ -116,14 +126,16 @@ class UserFileHandler:
             ).exists():
                 return unique
 
-    def generate_and_save_image_thumbnails(
-        self, image, user_file, storage=None, only_with_name=None
+    def generate_and_save_file_thumbnails(
+        self, stream, mime_type, image, user_file, storage=None, only_with_name=None
     ):
         """
         Generates the thumbnails based on the current settings and saves them to the
         provided storage. Note that existing files with the same name will be
         overwritten.
 
+        :param stream: An IO stream containing the uploaded file.
+        :type stream: IOBase
         :param image: The original Pillow image that serves as base when generating the
             the image.
         :type image: Image
@@ -136,14 +148,28 @@ class UserFileHandler:
             will be regenerated.
         :type only_with_name: None or String
         :raises ValueError: If the provided user file is not a valid image.
+        :return: Whether or not thumbnails have been generated and saved.
+        :rtype: bool
         """
 
-        if not user_file.is_image:
-            raise ValueError("The provided user file is not an image.")
+        if not (user_file.is_image or mime_type in THUMBNAIL_MIME_TYPES):
+            return False
 
         storage = storage or default_storage
-        image_width = user_file.image_width
-        image_height = user_file.image_height
+        if user_file.is_image:
+            image_width = user_file.image_width
+            image_height = user_file.image_height
+        elif mime_type == "application/pdf":
+            try:
+                image = convert_from_bytes(stream.read(), fmt="jpeg", single_file=True)[0]
+            except Exception:
+                return False
+
+            stream.seek(0)
+            image_width = image.width
+            image_height = image.height
+        elif mime_type == "application/vnd.ms-powerpoint" or mime_type == "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+            return False
 
         for name, size in settings.USER_THUMBNAILS.items():
             if only_with_name and only_with_name != name:
@@ -166,6 +192,8 @@ class UserFileHandler:
 
             del thumbnail
             del thumbnail_stream
+        
+        return True
 
     def upload_user_file(self, user, file_name, stream, storage=None):
         """
@@ -210,7 +238,7 @@ class UserFileHandler:
             return existing_user_file
 
         extension = pathlib.Path(file_name).suffix[1:].lower()
-        mime_type = mimetypes.guess_type(file_name)[0] or ""
+        mime_type = mimetypes.guess_type(file_name)[0]
         unique = self.generate_unique(hash, extension)
 
         # By default the provided file is not an image.
@@ -233,7 +261,7 @@ class UserFileHandler:
             original_name=file_name,
             original_extension=extension,
             size=size,
-            mime_type=mime_type,
+            mime_type=mime_type or "",
             unique=unique,
             uploaded_by=user,
             sha256_hash=hash,
@@ -245,12 +273,7 @@ class UserFileHandler:
         # If the uploaded file is an image we need to generate the configurable
         # thumbnails for it. We want to generate them before the file is saved to the
         # storage because some storages close the stream after saving.
-        if image:
-            self.generate_and_save_image_thumbnails(image, user_file, storage=storage)
-
-            # When all the thumbnails have been generated, the image can be deleted
-            # from memory.
-            del image
+        self.generate_and_save_file_thumbnails(stream, mime_type, image, user_file, storage=storage)
 
         # Save the file to the storage.
         full_path = self.user_file_path(user_file)
@@ -258,6 +281,9 @@ class UserFileHandler:
 
         # Close the stream because we don't need it anymore.
         stream.close()
+
+        if image:
+            image.close()
 
         return user_file
 

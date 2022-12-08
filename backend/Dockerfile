@@ -27,6 +27,7 @@ RUN apt-get update &&  \
     libpq-dev \
     dos2unix \
     tini \
+    poppler-utils \
     && \
     # Postgresql repository has to be added manually to get pre-13 versions.
     echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list && \
