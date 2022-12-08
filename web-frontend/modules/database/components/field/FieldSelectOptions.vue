@@ -24,7 +24,9 @@
           v-model="item.value"
           class="input select-options__value"
           :class="{ 'input--error': $v.value.$each[index].value.$error }"
+          :ref="'input-' + index"
           @input="$emit('input', value)"
+          @keydown.enter.stop.prevent="add()"
           @blur="$v.value.$each[index].value.$touch()"
         />
         <a class="select-options__remove" @click.stop.prevent="remove(index)">
@@ -78,6 +80,7 @@ export default {
       })
       this.$emit('input', this.value)
       this.lastSeenId -= 1
+      this.$refs['input-' + (this.value.length - 1)][0].focus()
     },
     openColor(index) {
       this.colorContextSelected = index
