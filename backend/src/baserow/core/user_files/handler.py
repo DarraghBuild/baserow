@@ -2,9 +2,10 @@ import mimetypes
 import pathlib
 import tempfile
 import re
+import traceback
 from io import BytesIO
-from subprocess import check_output
-from os.path import join, basename
+from subprocess import check_output, STDOUT
+from os.path import join
 from typing import Optional
 from urllib.parse import urlparse
 from pdf2image import convert_from_bytes
@@ -65,12 +66,13 @@ def convert_document_to_image(stream, mime_type):
     stream.seek(0)
 
     with tempfile.TemporaryDirectory() as tmp_dir:
-        convert_output = check_output(f"soffice --headless --convert-to pdf:{DOCUMENT_CONVERSION_MAP[mime_type]}_pdf_Export --outdir {tmp_dir} {tmp.name}", shell=True).decode("utf-8")
+        convert_output = check_output(f"soffice --headless --convert-to pdf:{DOCUMENT_CONVERSION_MAP[mime_type]}_pdf_Export --outdir {tmp_dir} {tmp.name}", shell=True, stderr=STDOUT).decode("utf-8")
         match = CONVERT_OUT_PATTERN.match(convert_output)
         if match:
             out_pdf_path = match.group(1)
             with open(out_pdf_path, "rb") as pdf_stream:
                 image = convert_from_bytes(pdf_stream.read(), fmt="jpeg", single_file=True)[0]
+
         else:
             raise Exception("Could not convert document to image. Convert command output: " + convert_output)
 
@@ -208,6 +210,7 @@ class UserFileHandler:
                 image = convert_from_bytes(stream.read(), fmt="jpeg", single_file=True)[0]
                 stream.seek(0)
             except Exception:
+                traceback.print_exc()
                 return False
 
             image_width = image.width
@@ -216,6 +219,7 @@ class UserFileHandler:
             try:
                 image = convert_document_to_image(stream, mime_type)
             except Exception:
+                traceback.print_exc()
                 return False
 
             image_width = image.width
