@@ -44,7 +44,11 @@ class Command(BaseCommand):
 
                 full_path = handler.user_file_path(user_file)
                 mime_type = mimetypes.guess_type(full_path)[0]
-                stream = default_storage.open(full_path)
+                try:
+                    stream = default_storage.open(full_path)
+                except FileNotFoundError:
+                    continue
+
                 image = None
 
                 try:
