@@ -66,9 +66,13 @@ def convert_document_to_image(stream, mime_type):
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         convert_output = check_output(f"soffice --headless --convert-to pdf:{DOCUMENT_CONVERSION_MAP[mime_type]}_pdf_Export --outdir {tmp_dir} {tmp.name}", shell=True).decode("utf-8")
-        out_pdf_path = CONVERT_OUT_PATTERN.match(convert_output).group(1)
-        with open(out_pdf_path, "rb") as pdf_stream:
-            image = convert_from_bytes(pdf_stream.read(), fmt="jpeg", single_file=True)[0]
+        match = CONVERT_OUT_PATTERN.match(convert_output)
+        if match:
+            out_pdf_path = match.group(1)
+            with open(out_pdf_path, "rb") as pdf_stream:
+                image = convert_from_bytes(pdf_stream.read(), fmt="jpeg", single_file=True)[0]
+        else:
+            raise Exception("Could not convert document to image. Convert command output: " + convert_output)
 
     tmp.close()
 
@@ -209,7 +213,11 @@ class UserFileHandler:
             image_width = image.width
             image_height = image.height
         elif mime_type in DOCUMENT_CONVERSION_MAP:
-            image = convert_document_to_image(stream, mime_type)
+            try:
+                image = convert_document_to_image(stream, mime_type)
+            except Exception:
+                return False
+
             image_width = image.width
             image_height = image.height
 
