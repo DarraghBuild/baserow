@@ -7,7 +7,7 @@
         class="card-file__item"
       >
         <img
-          v-if="file.is_image"
+          v-if="!!file.thumbnails"
           class="card-file__image"
           :src="file.thumbnails.tiny.url"
         />

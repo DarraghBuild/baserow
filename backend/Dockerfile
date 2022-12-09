@@ -45,6 +45,13 @@ RUN apt-get update &&  \
     git \
     gosu \
     xmlsec1 \
+    poppler-utils \
+    openjdk-17-jre-headless \
+    libreoffice-java-common \
+    libreoffice-common \
+    libreoffice-impress \
+    libreoffice-writer \
+    libreoffice-calc \
     && apt-get autoclean \
     && apt-get clean \
     && apt-get autoremove \

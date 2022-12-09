@@ -8,7 +8,7 @@
       >
         <div class="field-file__preview">
           <a class="field-file__icon" @click="$refs.fileModal.show(index)">
-            <img v-if="file.is_image" :src="file.thumbnails.small.url" />
+            <img v-if="!!file.thumbnails" :src="file.thumbnails.small.url" />
             <i
               v-else
               class="fas"

@@ -23,7 +23,7 @@
       >
         <a class="grid-field-file__link">
           <img
-            v-if="file.is_image"
+            v-if="!!file.thumbnails"
             class="grid-field-file__image"
             :src="file.thumbnails.tiny.url"
           />
