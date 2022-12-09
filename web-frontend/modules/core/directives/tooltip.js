@@ -8,23 +8,19 @@ export default {
    * mouse events to show and hide the tooltip.
    */
   initialize(el) {
-    console.log("initialize")
     el.updatePositionEvent = () => {
-      console.log("updatePositionEvent")
       const rect = el.getBoundingClientRect()
       const width = rect.right - rect.left
       el.tooltipElement.style.top = rect.bottom + 4 + 'px'
       el.tooltipElement.style.left = rect.left + width / 2 + 'px'
     }
     el.tooltipMouseEnterEvent = () => {
-      console.log("mouseEnterEvent")
       if (el.tooltipElement) {
         this.terminate(el)
       }
       if (el.value) {
         let value = el.value
         el.timeOut = setTimeout(() => {
-          console.log("mouseEnterEvent Timeout")
           el.tooltipElement = document.createElement('div')
           el.tooltipElement.className = 'tooltip tooltip--body tooltip--center'
           document.body.insertBefore(el.tooltipElement, document.body.firstChild)
@@ -46,7 +42,6 @@ export default {
       }
     }
     el.tooltipMoveLeaveEvent = () => {
-      console.log("moveLeaveEvent")
       if (el.timeOut) {
         clearTimeout(el.timeOut)
         el.timeOut = null
@@ -68,7 +63,6 @@ export default {
    * be destroyed if it wasn't already and all the events can be removed.
    */
   terminate(el) {
-    console.log("terminate")
     if (el.tooltipElement && el.tooltipElement.parentNode) {
       el.tooltipElement.parentNode.removeChild(el.tooltipElement)
     }
@@ -80,13 +74,11 @@ export default {
     window.removeEventListener('resize', el.updatePositionEvent)
   },
   bind(el, binding) {
-    console.log("bind")
     el.tooltipElement = null
     el.tooltipContentElement = null
     binding.def.update(el, binding)
   },
   update(el, binding) {
-    console.log("update")
     let { value } = binding
     if (value != null && typeof value === 'object') {
       if (value.value === el.value && value.delay === el.delay) {
@@ -108,7 +100,6 @@ export default {
     }
   },
   unbind(el, binding) {
-    console.log("unbind")
     binding.def.terminate(el)
   },
 }
