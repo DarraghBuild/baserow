@@ -1,7 +1,10 @@
 import mimetypes
 import pathlib
+import tempfile
+import re
 from io import BytesIO
-from os.path import join
+from subprocess import check_output
+from os.path import join, basename
 from typing import Optional
 from urllib.parse import urlparse
 from pdf2image import convert_from_bytes
@@ -28,11 +31,48 @@ from .exceptions import (
 from .models import UserFile
 
 # all non-image file types which can have thumbnails generated
-THUMBNAIL_MIME_TYPES = set([
-    "application/pdf",
-    "application/vnd.ms-powerpoint"
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-])
+THUMBNAIL_MIME_TYPES = {
+    "application/pdf": "pdf",
+    "application/vnd.ms-powerpoint": "ppt",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
+    "application/vnd.oasis.opendocument.presentation": "odp",
+    "application/msword": "doc",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+    "application/vnd.oasis.opendocument.text": "odt",
+    "application/vnd.ms-excel": "xls",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+    "application/vnd.oasis.opendocument.spreadsheet": "ods",
+}
+
+DOCUMENT_CONVERSION_MAP = {
+    "application/vnd.ms-powerpoint": "impress",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation": "impress",
+    "application/vnd.oasis.opendocument.presentation": "impress",
+    "application/msword": "writer",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "writer",
+    "application/vnd.oasis.opendocument.text": "writer",
+    "application/vnd.ms-excel": "calc",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "calc",
+    "application/vnd.oasis.opendocument.spreadsheet": "calc",
+}
+
+CONVERT_OUT_PATTERN = re.compile(r"^convert .*? -> (.*?) using filter : .*_Export$")
+
+def convert_document_to_image(stream, mime_type):
+    suffix = THUMBNAIL_MIME_TYPES[mime_type]
+    tmp = tempfile.NamedTemporaryFile(suffix=suffix)
+    tmp.write(stream.read())
+    stream.seek(0)
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        convert_output = check_output(f"soffice --headless --convert-to pdf:{DOCUMENT_CONVERSION_MAP[mime_type]}_pdf_Export --outdir {tmp_dir} {tmp.name}", shell=True).decode("utf-8")
+        out_pdf_path = CONVERT_OUT_PATTERN.match(convert_output).group(1)
+        with open(out_pdf_path, "rb") as pdf_stream:
+            image = convert_from_bytes(pdf_stream.read(), fmt="jpeg", single_file=True)[0]
+
+    tmp.close()
+
+    return image
 
 class UserFileHandler:
     def get_user_file_by_name(
@@ -162,14 +202,16 @@ class UserFileHandler:
         elif mime_type == "application/pdf":
             try:
                 image = convert_from_bytes(stream.read(), fmt="jpeg", single_file=True)[0]
+                stream.seek(0)
             except Exception:
                 return False
 
-            stream.seek(0)
             image_width = image.width
             image_height = image.height
-        elif mime_type == "application/vnd.ms-powerpoint" or mime_type == "application/vnd.openxmlformats-officedocument.presentationml.presentation":
-            return False
+        elif mime_type in DOCUMENT_CONVERSION_MAP:
+            image = convert_document_to_image(stream, mime_type)
+            image_width = image.width
+            image_height = image.height
 
         for name, size in settings.USER_THUMBNAILS.items():
             if only_with_name and only_with_name != name:
@@ -273,6 +315,7 @@ class UserFileHandler:
         # If the uploaded file is an image we need to generate the configurable
         # thumbnails for it. We want to generate them before the file is saved to the
         # storage because some storages close the stream after saving.
+        stream.seek(0)
         self.generate_and_save_file_thumbnails(stream, mime_type, image, user_file, storage=storage)
 
         # Save the file to the storage.

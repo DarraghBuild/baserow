@@ -43,7 +43,6 @@ class Command(BaseCommand):
                 i += 1
 
                 full_path = handler.user_file_path(user_file)
-                print(full_path)
                 mime_type = mimetypes.guess_type(full_path)[0]
                 stream = default_storage.open(full_path)
                 image = None

@@ -209,6 +209,8 @@ pyopenssl==22.1.0
     #   ndg-httpsclient
     #   pysaml2
     #   twisted
+pypandoc==1.10
+    # via -r base.in
 pyparsing==3.0.9
     # via packaging
 pyrsistent==0.18.1
