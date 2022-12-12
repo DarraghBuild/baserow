@@ -89,6 +89,7 @@
 <script>
 import TrashModal from '@baserow/modules/core/components/trash/TrashModal'
 import SettingsModal from '@baserow/modules/core/components/settings/SettingsModal'
+import { logoutAndRedirectToLogin } from '@baserow/modules/core/utils/auth'
 
 export default {
   name: 'DashboardSidebar',
@@ -108,8 +109,7 @@ export default {
   },
   methods: {
     logoff() {
-      this.$store.dispatch('auth/logoff')
-      this.$nuxt.$router.push({ name: 'login' })
+      logoutAndRedirectToLogin(this.$nuxt.$router, this.$store)
     },
   },
 }
