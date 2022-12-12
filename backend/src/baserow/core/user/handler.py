@@ -38,6 +38,7 @@ from .emails import (
     ResetPasswordEmail,
 )
 from .exceptions import (
+    DeactivatedUserException,
     DisabledSignupError,
     InvalidPassword,
     PasswordDoesNotMatchValidation,
@@ -130,13 +131,16 @@ class UserHandler:
 
         core_handler = CoreHandler()
 
-        if language is None:
-            language = settings.LANGUAGE_CODE
-
         email = normalize_email_address(email)
-
-        if User.objects.filter(Q(email=email) | Q(username=email)).exists():
-            raise UserAlreadyExist(f"A user with username {email} already exists.")
+        user_query = User.objects.filter(Q(email=email) | Q(username=email))
+        if user_query.exists():
+            user = user_query.first()
+            if user.is_active:
+                raise UserAlreadyExist(f"A user with email {email} already exists.")
+            else:
+                raise DeactivatedUserException(
+                    f"User with email {email} has been deactivated."
+                )
 
         group_invitation = None
         group_user = None
@@ -182,9 +186,9 @@ class UserHandler:
 
         user.save()
 
-        # Since there is a one-to-one relationship between the user and their
-        # profile, we create and populate it here because this way
-        # you can assume safely that, everywhere else in the code, it exists.
+        # Immediately create the one-to-one relationship with the user profile
+        # so we can safely use it everywhere else in the code.
+        language = language or settings.LANGUAGE_CODE
         UserProfile.objects.create(user=user, language=language)
 
         if group_invitation_token:
@@ -378,21 +382,17 @@ class UserHandler:
         for plugin in plugin_registry.registry.values():
             plugin.user_signed_in(user)
 
-    def schedule_user_deletion(self, user: AbstractUser, password: str):
+    def schedule_user_deletion(self, user: AbstractUser):
         """
         Schedules the user account deletion. The user is flagged as `to_be_deleted` and
         will be deleted after a predefined grace delay unless the user
         cancel his account deletion by log in again.
-        To be valid, the current user password must be provided.
         This action sends an email to the user to explain the process.
 
         :param user: The user to flag as `to_be_deleted`.
-        :param password: The current user password.
-        :raises InvalidPassword: When a provided password is incorrect.
+        :raises UserIsLastAdmin: When the user cannot be deleted as he is the last
+            admin.
         """
-
-        if not user.check_password(password):
-            raise InvalidPassword("The provided password is incorrect.")
 
         if (
             user.is_staff

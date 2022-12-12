@@ -1,12 +1,15 @@
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Optional, Tuple, Type
 
 from django.contrib.auth.models import AbstractUser
-from django.db import connection, transaction
+from django.db import connection
+
+from psycopg2 import sql
 
 from baserow.core.auth_provider.auth_provider_types import AuthProviderType
 from baserow.core.auth_provider.exceptions import AuthProviderModelNotFound
 from baserow.core.auth_provider.models import AuthProviderModel
+from baserow.core.handler import CoreHandler
 from baserow.core.registries import auth_provider_type_registry
 from baserow.core.user.exceptions import UserNotFound
 from baserow.core.user.handler import UserHandler
@@ -20,6 +23,7 @@ class UserInfo:
     email: str
     name: str
     language: Optional[str] = None
+    group_invitation_token: Optional[str] = None
 
 
 class AuthProviderHandler:
@@ -95,7 +99,7 @@ class AuthProviderHandler:
     @classmethod
     def get_or_create_user_and_sign_in_via_auth_provider(
         cls, user_info: UserInfo, auth_provider: Type[AuthProviderModel]
-    ) -> AbstractUser:
+    ) -> Tuple[AbstractUser, bool]:
         """
         Gets from the database if present or creates a user if not, based on the
         user info that was received from the identity provider.
@@ -104,9 +108,10 @@ class AuthProviderHandler:
             to the UserHandler().create_user() method.
         :param auth_provider: The authentication provider that was used to
             authenticate the user.
-        :raises UserAlreadyExists: When the user already exists but has been
+        :raises DeactivatedUserException: If the user exists but has been
             disabled from an admin.
-        :return: The user that was created or updated.
+        :return: The user that was created or retrieved and a boolean flag set
+            to True if the user has been created, False otherwise.
         """
 
         user_handler = UserHandler()
@@ -116,17 +121,26 @@ class AuthProviderHandler:
             is_original_provider = auth_provider.users.filter(id=user.id).exists()
             if not is_original_provider:
                 raise DifferentAuthProvider()
-        except UserNotFound:
-            with transaction.atomic():
-                user = user_handler.create_user(
-                    email=user_info.email,
-                    name=user_info.name,
-                    language=user_info.language,
-                    password=None,
-                    auth_provider=auth_provider,
-                )
 
-        return user
+            if user_info.group_invitation_token:
+                core_handler = CoreHandler()
+                invitation = core_handler.get_group_invitation_by_token(
+                    user_info.group_invitation_token
+                )
+                core_handler.accept_group_invitation(user, invitation)
+            created = False
+        except UserNotFound:
+            user = user_handler.create_user(
+                name=user_info.name,
+                email=user_info.email,
+                password=None,
+                language=user_info.language,
+                group_invitation_token=user_info.group_invitation_token,
+                auth_provider=auth_provider,
+            )
+            created = True
+
+        return user, created
 
     @staticmethod
     def get_next_provider_id() -> int:
@@ -136,6 +150,11 @@ class AuthProviderHandler:
         """
 
         with connection.cursor() as cursor:
-            cursor.execute("SELECT last_value + 1 FROM core_authprovidermodel_id_seq;")
-            row = cursor.fetchone()
-            return int(row[0])
+            cursor.execute(
+                sql.SQL("SELECT last_value + 1 from {table_id_seq};").format(
+                    table_id_seq=sql.Identifier(
+                        f"{AuthProviderModel._meta.db_table}_id_seq"
+                    )
+                )
+            )
+            return int(cursor.fetchone()[0])

@@ -32,6 +32,14 @@ export class BaserowPlugin extends Registerable {
     return null
   }
 
+  /**
+   * Every registered plugin can display an additional item in the sidebar within
+   * the group context.
+   */
+  getSidebarGroupComponent(group) {
+    return null
+  }
+
   /*
    * Every registered plugin can display a component in the links section of the
    * dashboard sidebar.
@@ -97,6 +105,26 @@ export class BaserowPlugin extends Registerable {
    * which will be visible on the share public view context.
    */
   getAdditionalShareLinkOptions() {
+    return []
+  }
+
+  /**
+   * Every registered plugin can display multiple additional context items in the
+   * database context displayed by the sidebar when opening the context menu of a
+   * database.
+   * @returns {*[]}
+   */
+  getAdditionalDatabaseContextComponents(group, database) {
+    return []
+  }
+
+  /**
+   * Every registered plugin can display multiple additional context items in the
+   * table context displayed by the sidebar when opening the context menu of a
+   * table.
+   * @returns {*[]}
+   */
+  getAdditionalTableContextComponents(group, table) {
     return []
   }
 }

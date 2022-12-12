@@ -34,7 +34,7 @@
         <EditRoleContext
           ref="editRoleContext"
           :group="group"
-          :row="editRoleInvitation"
+          :subject="editRoleInvitation"
           :roles="roles"
           @update-role="roleUpdate($event)"
         ></EditRoleContext>
@@ -151,6 +151,7 @@ export default {
   },
   methods: {
     onRowContext({ row, event, target }) {
+      event.preventDefault()
       if (target === undefined) {
         target = {
           left: event.clientX,
@@ -167,7 +168,7 @@ export default {
       this.editRoleInvitation = row
       this.$refs.editRoleContext[action](target, 'bottom', 'left', 4)
     },
-    async roleUpdate({ uid: permissionsNew, row: invitation }) {
+    async roleUpdate({ uid: permissionsNew, subject: invitation }) {
       const oldInvitation = clone(invitation)
       const newInvitation = clone(invitation)
       newInvitation.permissions = permissionsNew
