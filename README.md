@@ -7,6 +7,7 @@ This is a fork of Baserow. Here is what has been changed/added:
 * Thumbnail generation for PDF & other office suite document formats (text, presentation, & spreadsheet).
 * More thumbnail sizes.
 * Tooltips showing full field name when column is too short to display the full name.
+* All API documentation links open a new tab. Also added a link to the Baserow API's redoc page.
 * A Python script for automated backup & restore of the Postgres database and automated snapshots of all Baserow databases.
 
 ### Deploying
