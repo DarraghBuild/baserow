@@ -1,3 +1,23 @@
+## Fergtable
+
+This is a fork of Baserow. Here is what has been changed/added:
+
+* "Super Admins" can be specified by email in `.env`. These are users that get automatically added to every group with admin permissions and cannot be removed.
+* New users without a group invitation no longer get a new group created for them.
+* Thumbnail generation for PDF & other office suite document formats (text, presentation, & spreadsheet).
+* More thumbnail sizes.
+* Tooltips showing full field name when column is too short to display the full name.
+* All API documentation links open a new tab. Also added a link to the Baserow API's redoc page.
+* A Python script for automated backup & restore of the Postgres database and automated snapshots of all Baserow databases.
+
+### Deploying
+
+1. Copy `.env.defaults` to `.env` and fill in the required variables.
+1. Run `docker-compose up` (or `docker compose up`).
+1. If changes have been made to the source code, run with `--build` flag.
+
+Below is all of Baserow's README:
+
 ## Baserow is an open source no-code database tool and Airtable alternative.
 
 Create your own online database without technical experience. Our user-friendly no-code

@@ -61,8 +61,11 @@ import MemberRoleField from '@baserow/modules/core/components/settings/members/M
 import EditRoleContext from '@baserow/modules/core/components/settings/members/EditRoleContext'
 import { clone } from '@baserow/modules/core/utils/object'
 
+import superAdmin from '@baserow/modules/core/mixins/superAdmin'
+
 export default {
   name: 'MembersInvitesTable',
+  mixins: [superAdmin],
   components: {
     EditInviteContext,
     EditRoleContext,
@@ -130,6 +133,7 @@ export default {
             roles: this.roles,
             userId: 0,
             groupId: this.group.id,
+            isSuperAdmin: this.isSuperAdmin,
           }
         ),
         new CrudTableColumn(null, null, MoreField, false, false, true),

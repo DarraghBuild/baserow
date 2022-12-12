@@ -964,6 +964,35 @@ class CoreHandler:
 
         return group_user
 
+    def add_admin_to_group(self, user, group):
+        """
+        Adds the user to the correct group with admin permissions.
+        If the user is already a member of the group then the
+        permissions are updated.
+
+        :param user: The user being added.
+        :type: user: User
+        :param group: The group to which the user is being added.
+        :type group: Group
+        :return: The group user relationship.
+        :rtype: GroupUser
+        """
+
+        group_user, created = GroupUser.objects.update_or_create(
+            user=user,
+            group=group,
+            defaults={
+                "order": GroupUser.get_last_order(user),
+                "permissions": "ADMIN",
+            },
+        )
+
+        group_user_added.send(
+            self, group_user_id=group_user.id, group_user=group_user, user=user
+        )
+
+        return group_user
+
     def get_user_application(
         self,
         user: AbstractUser,

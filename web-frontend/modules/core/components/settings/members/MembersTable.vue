@@ -70,8 +70,11 @@ import GroupMemberInviteModal from '@baserow/modules/core/components/group/Group
 import EditMemberContext from '@baserow/modules/core/components/settings/members/EditMemberContext'
 import EditRoleContext from '@baserow/modules/core/components/settings/members/EditRoleContext'
 
+import superAdmin from '@baserow/modules/core/mixins/superAdmin'
+
 export default {
   name: 'MembersTable',
+  mixins: [superAdmin],
   components: {
     EditMemberContext,
     EditRoleContext,
@@ -135,6 +138,7 @@ export default {
             roles: this.roles,
             userId: this.userId,
             groupId: this.group.id,
+            isSuperAdmin: this.isSuperAdmin,
           }
         ),
         new CrudTableColumn(null, null, MoreField, false, false, true),

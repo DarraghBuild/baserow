@@ -194,18 +194,10 @@ class UserHandler:
         if group_invitation_token:
             group_user = core_handler.accept_group_invitation(user, group_invitation)
 
-        if not group_user:
-            with translation.override(language):
-                group_user = core_handler.create_group(
-                    user=user, name=_("%(name)s's group") % {"name": name}
-                )
-
-        if not group_invitation_token and template:
-            core_handler.install_template(user, group_user.group, template)
-
-        # Call the user_created method for each plugin that is in the registry.
-        for plugin in plugin_registry.registry.values():
-            plugin.user_created(user, group_user.group, group_invitation, template)
+        if group_user:
+            # Call the user_created method for each plugin that is in the registry.
+            for plugin in plugin_registry.registry.values():
+                plugin.user_created(user, group_user.group, group_invitation, template)
 
         # register the authentication provider used to create the user
         if auth_provider is None:

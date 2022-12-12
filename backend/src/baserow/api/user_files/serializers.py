@@ -6,7 +6,7 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from baserow.core.models import UserFile
-from baserow.core.user_files.handler import UserFileHandler
+from baserow.core.user_files.handler import UserFileHandler, THUMBNAIL_MIME_TYPES
 
 
 class UserFileUploadViaURLRequestSerializer(serializers.Serializer):
@@ -29,7 +29,7 @@ class UserFileURLAndThumbnailsSerializerMixin(serializers.Serializer):
 
     @extend_schema_field(OpenApiTypes.OBJECT)
     def get_thumbnails(self, instance):
-        if not self.get_instance_attr(instance, "is_image"):
+        if not (self.get_instance_attr(instance, "is_image") or self.get_instance_attr(instance, "mime_type") in THUMBNAIL_MIME_TYPES):
             return None
 
         name = self.get_instance_attr(instance, "name")

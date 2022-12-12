@@ -2,6 +2,7 @@
   <span
     v-if="
       props.column.additionalProps.userId === props.row.user_id ||
+      props.column.additionalProps.isSuperAdmin(props.row) ||
       !parent.$hasPermission(
         'group_user.update',
         props.row,

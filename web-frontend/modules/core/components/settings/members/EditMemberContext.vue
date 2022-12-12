@@ -10,7 +10,7 @@
         </li>
         <li
           v-if="
-            member.user_id !== userId &&
+            member.user_id !== userId && !isSuperAdmin(member) &&
             $hasPermission('group_user.delete', member, group.id)
           "
         >
@@ -36,12 +36,14 @@ import { mapGetters } from 'vuex'
 import context from '@baserow/modules/core/mixins/context'
 import RemoveFromGroupModal from '@baserow/modules/core/components/group/RemoveFromGroupModal'
 
+import superAdmin from '@baserow/modules/core/mixins/superAdmin'
+
 export default {
   name: 'EditMemberContext',
   components: {
     RemoveFromGroupModal,
   },
-  mixins: [context],
+  mixins: [context, superAdmin],
   props: {
     group: {
       required: true,

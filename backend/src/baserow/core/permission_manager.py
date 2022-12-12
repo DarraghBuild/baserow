@@ -24,6 +24,7 @@ from .operations import (
 )
 from .registries import PermissionManagerType
 
+from baserow.core.user.utils import is_user_super_admin
 
 class CorePermissionManagerType(PermissionManagerType):
     """
@@ -66,7 +67,7 @@ class StaffOnlyPermissionManagerType(PermissionManagerType):
                 raise NotAuthenticated()
 
             if operation in self.STAFF_ONLY_OPERATIONS:
-                if actor.is_staff:
+                if actor.is_staff or is_user_super_admin(actor):
                     return True
                 else:
                     raise IsNotAdminError(user)
@@ -74,7 +75,7 @@ class StaffOnlyPermissionManagerType(PermissionManagerType):
     def get_permissions_object(self, actor, group=None):
         return {
             "staff_only_operations": self.STAFF_ONLY_OPERATIONS,
-            "is_staff": actor.is_staff,
+            "is_staff": actor.is_staff or is_user_super_admin(actor),
         }
 
 

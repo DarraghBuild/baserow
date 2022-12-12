@@ -37,6 +37,12 @@ class UserInvalidGroupPermissionsError(PermissionException):
             **kwargs,
         )
 
+class ModifySuperAdminError(Exception):
+    """Raised when a user tries to modify permissions for a super admin user."""
+
+    def __init__(self, email, *args, **kwargs):
+        self.email = email
+        super().__init__(f"The user {email} is a super admin and cannot be modified.", *args, **kwargs)
 
 class PermissionDenied(PermissionException):
     """

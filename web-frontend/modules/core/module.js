@@ -103,6 +103,10 @@ export default function CoreModule(options) {
           default: -1,
         },
         {
+          key: 'SUPER_ADMINS',
+          default: '',
+        },
+        {
           key: 'BASEROW_FRONTEND_JOBS_POLLING_TIMEOUT_MS',
           default: 2000,
         },

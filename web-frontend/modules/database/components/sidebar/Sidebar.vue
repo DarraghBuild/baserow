@@ -6,17 +6,13 @@
   >
     <template #context>
       <li>
-        <nuxt-link
-          :to="{
-            name: 'database-api-docs-detail',
-            params: {
-              databaseId: application.id,
-            },
-          }"
+        <a
+          :href="`/api-docs/database/${application.id}`"
+          target="_blank"
         >
           <i class="context__menu-icon fas fa-fw fa-book"></i>
           {{ $t('sidebar.viewAPI') }}
-        </nuxt-link>
+        </a>
       </li>
     </template>
     <template v-if="isAppSelected(application)" #body>

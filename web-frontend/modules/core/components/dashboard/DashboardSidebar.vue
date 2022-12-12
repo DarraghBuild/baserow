@@ -35,6 +35,16 @@
       <li>
         <a
           class="dashboard__sidebar-link"
+          href="https://wiki.fai2.com/Baserow_Cheatsheet"
+          target="_blank"
+        >
+          <i class="fas fa-fw fa-file-alt"></i>
+          Baserow Cheatsheet
+        </a>
+      </li>
+      <li>
+        <a
+          class="dashboard__sidebar-link"
           href="https://baserow.io/user-docs"
           target="_blank"
         >

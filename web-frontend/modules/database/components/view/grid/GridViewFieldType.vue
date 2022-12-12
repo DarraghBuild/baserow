@@ -18,7 +18,7 @@
       <div class="grid-view__description-icon">
         <i class="fas" :class="'fa-' + field._.type.iconClass"></i>
       </div>
-      <div class="grid-view__description-name">
+      <div class="grid-view__description-name" v-tooltip="{ value: tooltipText, delay: 500 }">
         <span ref="quickEditLink" @dblclick="handleQuickEdit()">
           {{ field.name }}
         </span>
@@ -230,6 +230,7 @@
           )
         "
         :store-prefix="storePrefix"
+        @resized="setNameTooltip"
       ></GridViewFieldWidthHandle>
     </div>
   </div>
@@ -282,6 +283,7 @@ export default {
   },
   data() {
     return {
+      tooltipText: null,
       dragging: false,
     }
   },
@@ -346,6 +348,9 @@ export default {
           this.$options.propsData.storePrefix + 'view/grid/getAllFieldOptions',
       }),
     }
+  },
+  mounted() {
+    this.setNameTooltip()
   },
   methods: {
     moveField($event) {
@@ -449,6 +454,18 @@ export default {
     },
     getCanSortInView(field) {
       return this.$registry.get('field', field.type).getCanSortInView(field)
+    },
+    isNameOverflowing() {
+    },
+    setNameTooltip() {
+      if(this.$refs.quickEditLink.scrollWidth > this.$refs.quickEditLink.clientWidth)
+      {
+        this.tooltipText = this.field.name
+      }
+      else
+      {
+        this.tooltipText = null
+      }
     },
   },
 }

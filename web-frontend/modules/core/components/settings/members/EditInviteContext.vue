@@ -8,7 +8,9 @@
             {{ $t('membersSettings.invitesTable.actions.copyEmail') }}
           </a>
         </li>
-        <li>
+        <li
+          v-if="!isSuperAdmin(invitation)"
+        >
           <a
             :class="{
               'context__menu-item--loading': removeLoading,
@@ -30,9 +32,11 @@ import context from '@baserow/modules/core/mixins/context'
 import { notifyIf } from '@baserow/modules/core/utils/error'
 import GroupService from '@baserow/modules/core/services/group'
 
+import superAdmin from '@baserow/modules/core/mixins/superAdmin'
+
 export default {
   name: 'EditInviteContext',
-  mixins: [context],
+  mixins: [context, superAdmin],
   props: {
     invitation: {
       required: true,

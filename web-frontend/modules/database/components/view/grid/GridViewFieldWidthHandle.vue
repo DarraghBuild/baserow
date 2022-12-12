@@ -80,6 +80,7 @@ export default {
         return
       }
 
+      this.$emit('resized')
       try {
         await this.$store.dispatch(
           `${this.storePrefix}view/grid/updateFieldOptionsOfField`,

@@ -29,3 +29,9 @@ ERROR_INVALID_SORT_ATTRIBUTE = (
     HTTP_400_BAD_REQUEST,
     "Invalid attribute name provided to sort by.",
 )
+
+ERROR_MODIFYING_SUPER_ADMIN = (
+    "ERROR_MODIFYING_SUPER_ADMIN",
+    HTTP_400_BAD_REQUEST,
+    "Modifying group membership/permissions for a super admin user is not allowed.",
+)

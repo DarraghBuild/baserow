@@ -1,4 +1,5 @@
 import unicodedata
+from django.conf import settings
 from typing import Dict, Optional, Union
 
 from django.contrib.auth.models import AbstractUser
@@ -19,6 +20,11 @@ def normalize_email_address(email):
 
     return unicodedata.normalize("NFKC", email).strip().lower()
 
+def is_user_super_admin(user):
+    return user.email and is_email_super_admin(user.email)
+
+def is_email_super_admin(email):
+    return email in settings.SUPER_ADMINS
 
 def generate_session_tokens_for_user(
     user: AbstractUser, include_refresh_token: bool = False

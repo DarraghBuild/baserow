@@ -544,7 +544,18 @@ else:
 
 # Configurable thumbnails that are going to be generated when a user uploads an image
 # file.
-USER_THUMBNAILS = {"tiny": [None, 21], "small": [48, 48], "card_cover": [None, 160]}
+USER_THUMBNAILS = {
+    "tiny": [None, 21],
+    "tiny_square": [21, 21],
+    "small": [None, 48],
+    "small_square": [48, 48],
+    "card_cover": [None, 160],
+    "card_cover_square": [160, 160],
+    "medium": [None, 320],
+    "medium_square": [320, 320],
+    "large": [None, 640],
+    "large_square": [640, 640],
+}
 
 # The directory that contains the all the templates in JSON format. When for example
 # the `sync_templates` management command is called, then the templates in the
@@ -740,6 +751,8 @@ BASEROW_DISABLE_MODEL_CACHE = bool(os.getenv("BASEROW_DISABLE_MODEL_CACHE", ""))
 BASEROW_NOWAIT_FOR_LOCKS = not bool(
     os.getenv("BASEROW_WAIT_INSTEAD_OF_409_CONFLICT_ERROR", False)
 )
+
+SUPER_ADMINS = list(map(lambda s: s.strip(), os.getenv("SUPER_ADMINS", "").split(",")))
 
 # Indicates whether we are running the tests or not. Set to True in the test.py settings
 # file used by pytest.ini
