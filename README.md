@@ -4,7 +4,8 @@ This is a fork of Baserow. Here is what has been changed/added:
 
 * "Super Admins" can be specified by email in `.env`. These are users that get automatically added to every group with admin permissions and cannot be removed.
 * New users without a group invitation no longer get a new group created for them.
-* Various minor frontend changes.
+* Thumbnail generation for PDF & other office suite document formats (text, presentation, & spreadsheet).
+* Tooltips showing full field name when column is too short to display the full name.
 * A Python script for automated backup & restore of the Postgres database and daily snapshots of all Baserow databases.
 
 ### Deploying
