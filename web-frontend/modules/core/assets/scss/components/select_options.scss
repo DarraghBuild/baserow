@@ -1,8 +1,7 @@
 .select-options {
   position: relative;
-  max-height: calc(100vh - 500px);
-  min-height: 80px;
-  overflow-y: scroll;
+  max-height: calc(max(80px, 100vh - 500px));
+  overflow-y: auto;
   margin-bottom: 8px;
 }
 
