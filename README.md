@@ -8,7 +8,7 @@ This is a fork of Baserow. Here is what has been changed/added:
 * More thumbnail sizes.
 * Tooltips showing full field name when column is too short to display the full name.
 * Select fields' "edit field" popup is scrollable, doesn't have random option colors, and can be navigated with up/down/enter keys.
-* All API documentation links open a new tab. Also added a link to the Baserow API's redoc page.
+* All API documentation links open a new tab. Also added a link to the Baserow API's redoc page & to the Ferguson Digital wiki page on Baserow.
 * A Python script for automated backup & restore of the Postgres database and automated snapshots of all Baserow databases.
 
 ### Deploying
