@@ -4,8 +4,7 @@ This is a fork of Baserow. Here is what has been changed/added:
 
 * "Super Admins" can be specified by email in `.env`. These are users that get automatically added to every group with admin permissions and cannot be removed.
 * New users without a group invitation no longer get a new group created for them.
-* Thumbnail generation for PDF & other office suite document formats (text, presentation, & spreadsheet).
-* More thumbnail sizes.
+* Thumbnail generation for PDF & other office suite document formats (text, presentation, & spreadsheet), plus more thumbnail sizes.
 * Tooltips showing full field name when column is too short to display the full name.
 * Select fields' "edit field" popup is scrollable, doesn't have random option colors, and can be navigated with up/down/enter keys.
 * All API documentation links open a new tab. Also added a link to the Baserow API's redoc page & to the Ferguson Digital wiki page on Baserow.
