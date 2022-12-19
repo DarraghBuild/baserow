@@ -26,7 +26,9 @@
           :class="{ 'input--error': $v.value.$each[index].value.$error }"
           :ref="'input-' + index"
           @input="$emit('input', value)"
-          @keydown.enter.stop.prevent="add()"
+          @keydown.enter.stop.prevent="add('', index + 1)"
+          @keydown.down.stop.prevent="focusOptionInput(index + 1)"
+          @keydown.up.stop.prevent="focusOptionInput(index - 1)"
           @blur="$v.value.$each[index].value.$touch()"
         />
         <a class="select-options__remove" @click.stop.prevent="remove(index)">
@@ -72,15 +74,19 @@ export default {
       this.value.splice(index, 1)
       this.$emit('input', this.value)
     },
-    add(optionValue = '') {
-      this.value.push({
+    add(optionValue = '', insertIndex = this.value.length) {
+      let color = randomColor()
+      if (this.value.length > 0) {
+        color = this.value[insertIndex - 1].color
+      }
+      this.value.splice(insertIndex, 0, {
         value: optionValue,
-        color: randomColor(),
+        color,
         id: this.lastSeenId,
       })
       this.$emit('input', this.value)
       this.lastSeenId -= 1
-      this.$refs['input-' + (this.value.length - 1)][0].focus()
+      this.$nextTick(() => { this.focusOptionInput(insertIndex) })
     },
     openColor(index) {
       this.colorContextSelected = index
@@ -105,6 +111,13 @@ export default {
             newOrder.findIndex((id) => id === b.id)
         )
       this.$emit('input', sortedValue)
+    },
+    focusOptionInput(index)
+    {
+      if (index < 0 || index >= this.value.length) {
+        return
+      }
+      this.$refs['input-' + index][0].focus()
     },
   },
   validations: {
