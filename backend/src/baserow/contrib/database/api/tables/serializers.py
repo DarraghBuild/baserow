@@ -6,7 +6,7 @@ from baserow.contrib.database.table.models import Table
 class TableSerializer(serializers.ModelSerializer):
     class Meta:
         model = Table
-        fields = ("id", "name", "order", "database_id")
+        fields = ("id", "name", "api_name", "order", "database_id")
         extra_kwargs = {
             "id": {"read_only": True},
             "database_id": {"read_only": True},

@@ -403,6 +403,7 @@ class Table(
     database = models.ForeignKey("database.Database", on_delete=models.CASCADE)
     order = models.PositiveIntegerField()
     name = models.CharField(max_length=255)
+    api_name = models.CharField(max_length=255)
     row_count = models.PositiveIntegerField(null=True)
     row_count_updated_at = models.DateTimeField(null=True)
     version = models.TextField(default="initial_version")

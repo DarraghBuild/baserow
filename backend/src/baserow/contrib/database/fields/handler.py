@@ -1,5 +1,6 @@
 import logging
 import traceback
+import re
 from copy import deepcopy
 from typing import (
     Any,
@@ -137,6 +138,26 @@ def _validate_field_name(
             f"reserved Baserow field name."
         )
 
+def _generate_field_api_name(field_name: str, table: Table) -> str:
+    """
+    Generates a unique API name for a field based on the provided field name.
+    The field name should be validated before calling this function.
+
+    :param field_name: The name of the field.
+    :param table: The table that the field is on.
+    :return: The generated API name.
+    """
+
+    base_api_name = re.sub(r"_+", "_", re.sub(r"[^a-z0-9_]", "_", field_name.lower())).strip("_")
+    api_name = base_api_name
+    
+    i = 2
+    while Field.objects.filter(table=table, api_name=api_name).exists():
+        api_name = f"{base_api_name}_{i}"
+        i += 1
+    
+    return api_name
+
 
 T = TypeVar("T", bound="Field")
 
@@ -144,7 +165,7 @@ T = TypeVar("T", bound="Field")
 class FieldHandler:
     def get_field(
         self,
-        field_id: int,
+        field_id: Union[str, int],
         field_model: Optional[Type[T]] = None,
         base_queryset: Optional[QuerySet] = None,
     ) -> T:
@@ -170,9 +191,10 @@ class FieldHandler:
             base_queryset = field_model.objects
 
         try:
-            field = base_queryset.select_related("table__database__group").get(
-                id=field_id
-            )
+            if isinstance(field_id, str):
+                field = base_queryset.select_related("table__database__group").get(api_name=field_id)
+            else:
+                field = base_queryset.select_related("table__database__group").get(id=field_id)
         except Field.DoesNotExist:
             raise FieldDoesNotExist(f"The field with id {field_id} does not exist.")
 
@@ -279,6 +301,8 @@ class FieldHandler:
         _validate_field_name(field_values, table)
 
         field_values = field_type.prepare_values(field_values, user)
+        field_values["api_name"] = _generate_field_api_name(field_values["name"], table)
+
         before = field_type.before_create(
             table,
             primary,

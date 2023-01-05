@@ -1,6 +1,7 @@
 import logging
 import traceback
-from typing import Any, Dict, List, NewType, Optional, Tuple, cast
+import re
+from typing import Any, Dict, List, NewType, Optional, Tuple, Union, cast
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
@@ -52,6 +53,26 @@ from .signals import table_created, table_deleted, table_updated, tables_reorder
 
 BATCH_SIZE = 1024
 
+def _generate_table_api_name(table_name: str, database: Database) -> str:
+    """
+    Generates a unique API name for a table based on the provided table name.
+
+    :param table_name: The name of the table.
+    :param database: The database that the table is on.
+    :return: The generated API name.
+    """
+
+    base_api_name = re.sub(r"_+", "_", re.sub(r"[^a-z0-9_]", "_", table_name.lower())).strip("_")
+    api_name = base_api_name
+    
+    i = 2
+    while Table.objects.filter(database=database, api_name=api_name).exists():
+        api_name = f"{base_api_name}_{i}"
+        i += 1
+    
+    return api_name
+
+
 TableForUpdate = NewType("TableForUpdate", Table)
 
 logger = logging.getLogger(__name__)
@@ -59,7 +80,7 @@ logger = logging.getLogger(__name__)
 
 class TableHandler:
     def get_table(
-        self, table_id: int, base_queryset: Optional[QuerySet] = None
+        self, table_id: Union[str, int], base_queryset: Optional[QuerySet] = None
     ) -> Table:
         """
         Selects a table with a given id from the database.
@@ -75,7 +96,10 @@ class TableHandler:
             base_queryset = Table.objects
 
         try:
-            table = base_queryset.select_related("database__group").get(id=table_id)
+            if isinstance(table_id, str):
+                table = base_queryset.select_related("database__group").get(api_name=table_id)
+            else:
+                table = base_queryset.select_related("database__group").get(id=table_id)
         except Table.DoesNotExist:
             raise TableDoesNotExist(f"The table with id {table_id} does not exist.")
 
@@ -205,10 +229,12 @@ class TableHandler:
         """
 
         last_order = Table.get_last_order(database)
+        api_name = _generate_table_api_name(name, database)
         table = Table.objects.create(
             database=database,
             order=last_order,
             name=name,
+            api_name=api_name,
         )
 
         # Let's create the fields before creating the model so that the whole
