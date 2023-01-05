@@ -95,11 +95,18 @@ class TableHandler:
         if base_queryset is None:
             base_queryset = Table.objects
 
+        is_int_id = False
         try:
-            if isinstance(table_id, str):
-                table = base_queryset.select_related("database__group").get(api_name=table_id)
-            else:
+            table_id = int(table_id)
+            is_int_id = True
+        except ValueError:
+            pass
+
+        try:
+            if is_int_id:
                 table = base_queryset.select_related("database__group").get(id=table_id)
+            else:
+                table = base_queryset.select_related("database__group").get(api_name=table_id)
         except Table.DoesNotExist:
             raise TableDoesNotExist(f"The table with id {table_id} does not exist.")
 

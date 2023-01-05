@@ -190,11 +190,18 @@ class FieldHandler:
         if base_queryset is None:
             base_queryset = field_model.objects
 
+        is_int_id = False
         try:
-            if isinstance(field_id, str):
-                field = base_queryset.select_related("table__database__group").get(api_name=field_id)
-            else:
+            table_id = int(field_id)
+            is_int_id = True
+        except ValueError:
+            pass
+
+        try:
+            if is_int_id:
                 field = base_queryset.select_related("table__database__group").get(id=field_id)
+            else:
+                field = base_queryset.select_related("table__database__group").get(api_name=field_id)
         except Field.DoesNotExist:
             raise FieldDoesNotExist(f"The field with id {field_id} does not exist.")
 
