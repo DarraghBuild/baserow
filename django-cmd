@@ -1,0 +1,3 @@
+#!/bin/bash
+
+docker exec fergtable-backend-1 /baserow/backend/docker/docker-entrypoint.sh manage $@

@@ -53,7 +53,7 @@ from .signals import table_created, table_deleted, table_updated, tables_reorder
 
 BATCH_SIZE = 1024
 
-def generate_table_api_name(table_name: str, database: Database) -> str:
+def generate_table_api_name(table_name: str) -> str:
     """
     Generates a unique API name for a table based on the provided table name.
 
@@ -247,7 +247,7 @@ class TableHandler:
         """
 
         last_order = Table.get_last_order(database)
-        api_name = generate_table_api_name(name, database)
+        api_name = generate_table_api_name(name)
         table = Table.objects.create(
             database=database,
             order=last_order,
@@ -560,7 +560,7 @@ class TableHandler:
         # Set a unique name for the table to import back as a new one.
         exported_table = serialized_tables[0]
         exported_table["name"] = self.find_unused_table_name(database, table.name)
-        exported_table["api_name"] = generate_table_api_name(exported_table["name"], database)
+        exported_table["api_name"] = generate_table_api_name(exported_table["name"])
         exported_table["order"] = Table.get_last_order(database)
 
         id_mapping: Dict[str, Any] = {"database_tables": {}}
