@@ -18,7 +18,7 @@ from baserow.contrib.database.fields.exceptions import (
     MaxFieldNameLengthExceeded,
     ReservedBaserowFieldNameException,
 )
-from baserow.contrib.database.fields.handler import FieldHandler
+from baserow.contrib.database.fields.handler import FieldHandler, generate_field_api_name
 from baserow.contrib.database.fields.models import Field
 from baserow.contrib.database.fields.registries import field_type_registry
 from baserow.contrib.database.models import Database
@@ -53,7 +53,7 @@ from .signals import table_created, table_deleted, table_updated, tables_reorder
 
 BATCH_SIZE = 1024
 
-def _generate_table_api_name(table_name: str, database: Database) -> str:
+def generate_table_api_name(table_name: str, database: Database) -> str:
     """
     Generates a unique API name for a table based on the provided table name.
 
@@ -66,7 +66,7 @@ def _generate_table_api_name(table_name: str, database: Database) -> str:
     api_name = base_api_name
     
     i = 2
-    while Table.objects.filter(database=database, api_name=api_name).exists():
+    while any(True for _ in filter(lambda v : not TrashHandler.item_has_a_trashed_parent(v), Table.objects.filter(api_name=api_name, trashed=False).iterator())):
         api_name = f"{base_api_name}_{i}"
         i += 1
     
@@ -106,7 +106,18 @@ class TableHandler:
             if is_int_id:
                 table = base_queryset.select_related("database__group").get(id=table_id)
             else:
-                table = base_queryset.select_related("database__group").get(api_name=table_id)
+                iter = base_queryset.select_related("database__group").filter(api_name=table_id, trashed=False).order_by("id").reverse().iterator()
+                table = None
+                for iter_table in iter:
+                    if TrashHandler.item_has_a_trashed_parent(iter_table):
+                        continue
+
+                    table = iter_table
+                    break
+
+                if table == None:
+                    raise Table.DoesNotExist()
+
         except Table.DoesNotExist:
             raise TableDoesNotExist(f"The table with id {table_id} does not exist.")
 
@@ -236,7 +247,7 @@ class TableHandler:
         """
 
         last_order = Table.get_last_order(database)
-        api_name = _generate_table_api_name(name, database)
+        api_name = generate_table_api_name(name, database)
         table = Table.objects.create(
             database=database,
             order=last_order,
@@ -257,6 +268,7 @@ class TableHandler:
                 order=index,
                 primary=index == 0,
                 name=name,
+                api_name=generate_field_api_name(name, table),
                 **field_config,
             )
             if field_options:
@@ -499,6 +511,7 @@ class TableHandler:
             serialized_related_link_row_field = {
                 "id": serialized_field["link_row_related_field_id"],
                 "name": related_field_name,
+                "api_name": generate_field_api_name(related_field_name, link_row_table),
                 "type": LinkRowFieldType.type,
                 "link_row_table_id": serialized_table["id"],
                 "link_row_related_field_id": serialized_field["id"],
@@ -547,6 +560,7 @@ class TableHandler:
         # Set a unique name for the table to import back as a new one.
         exported_table = serialized_tables[0]
         exported_table["name"] = self.find_unused_table_name(database, table.name)
+        exported_table["api_name"] = generate_table_api_name(exported_table["name"], database)
         exported_table["order"] = Table.get_last_order(database)
 
         id_mapping: Dict[str, Any] = {"database_tables": {}}

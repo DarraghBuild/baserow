@@ -679,6 +679,7 @@ class FieldType(
             "id": field.id,
             "type": self.type,
             "name": field.name,
+            "api_name": field.api_name,
             "order": field.order,
             "primary": field.primary,
         }

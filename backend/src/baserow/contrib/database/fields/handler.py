@@ -138,7 +138,7 @@ def _validate_field_name(
             f"reserved Baserow field name."
         )
 
-def _generate_field_api_name(field_name: str, table: Table) -> str:
+def generate_field_api_name(field_name: str, table: Table) -> str:
     """
     Generates a unique API name for a field based on the provided field name.
     The field name should be validated before calling this function.
@@ -152,7 +152,7 @@ def _generate_field_api_name(field_name: str, table: Table) -> str:
     api_name = base_api_name
     
     i = 2
-    while Field.objects.filter(table=table, api_name=api_name).exists():
+    while Field.objects.filter(table=table, api_name=api_name, trashed=False).exists():
         api_name = f"{base_api_name}_{i}"
         i += 1
     
@@ -192,7 +192,7 @@ class FieldHandler:
 
         is_int_id = False
         try:
-            table_id = int(field_id)
+            field_id = int(field_id)
             is_int_id = True
         except ValueError:
             pass
@@ -201,7 +201,18 @@ class FieldHandler:
             if is_int_id:
                 field = base_queryset.select_related("table__database__group").get(id=field_id)
             else:
-                field = base_queryset.select_related("table__database__group").get(api_name=field_id)
+                iter = base_queryset.select_related("table__database__group").filter(api_name=field_id, trashed=False).order_by("id").reverse().iterator()
+                field = None
+                for iter_field in iter:
+                    if TrashHandler.item_has_a_trashed_parent(iter_field.table, check_item_also=True):
+                        continue
+
+                    field = iter_field
+                    break
+
+                if field == None:
+                    raise Field.DoesNotExist()
+
         except Field.DoesNotExist:
             raise FieldDoesNotExist(f"The field with id {field_id} does not exist.")
 
@@ -308,7 +319,7 @@ class FieldHandler:
         _validate_field_name(field_values, table)
 
         field_values = field_type.prepare_values(field_values, user)
-        field_values["api_name"] = _generate_field_api_name(field_values["name"], table)
+        field_values["api_name"] = generate_field_api_name(field_values["name"], table)
 
         before = field_type.before_create(
             table,
@@ -666,8 +677,10 @@ class FieldHandler:
             [serialized_field.pop("name")],
         )
 
+        new_api_name = generate_field_api_name(new_name, field.table)
+
         # remove properties that are unqiue to the field
-        for key in ["id", "order", "primary"]:
+        for key in ["id", "order", "primary", "api_name"]:
             serialized_field.pop(key, None)
 
         new_field, updated_fields = self.create_field(
@@ -676,6 +689,7 @@ class FieldHandler:
             field_type.type,
             primary=False,
             name=new_name,
+            api_name=new_api_name,
             return_updated_fields=True,
             **serialized_field,
         )

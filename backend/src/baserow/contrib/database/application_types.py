@@ -111,6 +111,7 @@ class DatabaseApplicationType(ApplicationType):
                 DatabaseExportSerializedStructure.table(
                     id=table.id,
                     name=table.name,
+                    api_name=table.api_name,
                     order=table.order,
                     fields=serialized_fields,
                     views=serialized_views,
@@ -243,6 +244,7 @@ class DatabaseApplicationType(ApplicationType):
             table_instance = Table.objects.create(
                 database=database,
                 name=serialized_table["name"],
+                api_name=serialized_table["api_name"],
                 order=serialized_table["order"],
             )
             id_mapping["database_tables"][serialized_table["id"]] = table_instance.id
