@@ -10,11 +10,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="field",
             name="api_name",
-            field=models.CharField(max_length=255),
+            field=models.CharField(max_length=255, default=""),
         ),
         migrations.AddField(
             model_name="table",
             name="api_name",
-            field=models.CharField(max_length=255),
+            field=models.CharField(max_length=255, default=""),
         ),
     ]
