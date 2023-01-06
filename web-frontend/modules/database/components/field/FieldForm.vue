@@ -42,6 +42,55 @@
         </div>
       </div>
     </FormElement>
+    <FormElement :error="fieldHasErrors('api_name')" class="control">
+      <div class="control__elements">
+        <input
+          ref="api_name"
+          v-model="values.api_name"
+          :class="{ 'input--error': fieldHasErrors('api_name') }"
+          type="text"
+          class="input"
+          placeholder="api_name"
+          @focus="api_name_focused = true"
+          @blur="$v.values.api_name.$touch(); api_name_focused = false"
+        />
+        <div
+          v-if="$v.values.api_name.$dirty && !$v.values.api_name.required"
+          class="error"
+        >
+          {{ $t('error.requiredField') }}
+        </div>
+        <div
+          v-else-if="
+            $v.values.api_name.$dirty && !$v.values.api_name.mustHaveUniqueFieldAPIName
+          "
+          class="error"
+        >
+          {{ $t('fieldForm.fieldAlreadyExists') }}
+        </div>
+        <div
+          v-else-if="
+            $v.values.api_name.$dirty && !$v.values.api_name.mustUseValidAPINameCharacters
+          "
+          class="error"
+        >
+          Not a valid API name format.
+        </div>
+        <div
+          v-else-if="$v.values.api_name.$dirty && !$v.values.api_name.maxLength"
+          class="error"
+        >
+          {{ $t('error.nameTooLong') }}
+        </div>
+        <div
+          v-else-if="api_name_focused"
+          class="warning"
+        >
+          Warning: Changing the API name<br>
+          might break API integrations!
+        </div>
+      </div>
+    </FormElement>
     <div v-if="forcedType === null" class="control">
       <div class="control__elements">
         <Dropdown
@@ -110,11 +159,13 @@ export default {
   },
   data() {
     return {
-      allowedValues: ['name', 'type'],
+      allowedValues: ['name', 'api_name', 'type'],
       values: {
         name: '',
+        api_name: '',
         type: this.forcedType || '',
       },
+      api_name_focused: false,
     }
   },
   computed: {
@@ -140,6 +191,12 @@ export default {
           mustHaveUniqueFieldName: this.mustHaveUniqueFieldName,
           mustNotClashWithReservedName: this.mustNotClashWithReservedName,
         },
+        api_name: {
+          required,
+          maxLength: maxLength(MAX_FIELD_NAME_LENGTH),
+          mustHaveUniqueFieldAPIName: this.mustHaveUniqueFieldAPIName,
+          mustUseValidAPINameCharacters: this.mustUseValidAPINameCharacters,
+        },
         type: { required },
       },
     }
@@ -151,6 +208,17 @@ export default {
         fields = fields.filter((f) => f.id !== this.existingFieldId)
       }
       return !fields.map((f) => f.name).includes(param.trim())
+    },
+    mustHaveUniqueFieldAPIName(param) {
+      let fields = this.fields
+      if (this.existingFieldId !== null) {
+        fields = fields.filter((f) => f.id !== this.existingFieldId)
+      }
+      return !fields.map((f) => f.api_name).includes(param.trim())
+    },
+    mustUseValidAPINameCharacters(param) {
+      param = param.trim()
+      return /^[a-z0-9_]+$/.test(param) && param.slice(0) !== "_" && param.slice(-1) !== "_" && !(/__/.test(param))
     },
     mustNotClashWithReservedName(param) {
       return !RESERVED_BASEROW_FIELD_NAMES.includes(param.trim())

@@ -16,7 +16,10 @@
           <MarkdownIt :content="$t('apiDocsTableListFields.id')" />
         </APIDocsParameter>
         <APIDocsParameter name="name" :optional="false" type="string">
-          {{ $t('apiDocsTableListFields.name') }}
+          Front-end field name.
+        </APIDocsParameter>
+        <APIDocsParameter name="api_name" :optional="false" type="string">
+          API field name.
         </APIDocsParameter>
         <APIDocsParameter name="table_id" :optional="false" type="integer">
           {{ $t('apiDocsTableListFields.tableId') }}

@@ -18,7 +18,7 @@ from baserow.contrib.database.fields.dependencies.update_collector import (
 from baserow.contrib.database.fields.field_cache import FieldCache
 from baserow.contrib.database.fields.registries import field_type_registry
 from baserow.contrib.database.models import Database
-from baserow.contrib.database.table.handler import TableHandler
+from baserow.contrib.database.table.handler import TableHandler, generate_table_api_name
 from baserow.contrib.database.views.registries import view_type_registry
 from baserow.core.models import Application, Group
 from baserow.core.registries import ApplicationType
@@ -201,6 +201,7 @@ class DatabaseApplicationType(ApplicationType):
         storage: Optional[Storage] = None,
         progress_builder: Optional[ChildProgressBuilder] = None,
         external_table_fields_to_import: List[Tuple[Table, Dict[str, Any]]] = None,
+        generate_new_api_names: bool = False,
     ) -> List[Table]:
         """
         Imports tables exported by the `export_tables_serialized` method. Look at
@@ -241,10 +242,14 @@ class DatabaseApplicationType(ApplicationType):
         # First, we want to create all the table instances because it could be that
         # field or view properties depend on the existence of a table.
         for serialized_table in serialized_tables:
+            api_name = serialized_table.get("api_name")
+            if generate_new_api_names or not api_name:
+                api_name = generate_table_api_name(serialized_table["name"])
+
             table_instance = Table.objects.create(
                 database=database,
                 name=serialized_table["name"],
-                api_name=serialized_table["api_name"],
+                api_name=api_name,
                 order=serialized_table["order"],
             )
             id_mapping["database_tables"][serialized_table["id"]] = table_instance.id
@@ -419,6 +424,7 @@ class DatabaseApplicationType(ApplicationType):
         files_zip: Optional[ZipFile] = None,
         storage: Optional[Storage] = None,
         progress_builder: Optional[ChildProgressBuilder] = None,
+        generate_new_api_names: bool = False,
     ) -> Application:
         """
         Imports a database application exported by the `export_serialized` method.
@@ -451,6 +457,7 @@ class DatabaseApplicationType(ApplicationType):
                 files_zip,
                 storage,
                 progress.create_child_builder(represents_progress=table_progress),
+                generate_new_api_names=generate_new_api_names,
             )
 
         return database

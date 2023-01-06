@@ -138,6 +138,24 @@ def _validate_field_name(
             f"reserved Baserow field name."
         )
 
+def _uniqify_field_api_name(api_name: str, table: Table) -> str:
+    """
+    Ensures that the field API name is unique by appending a number to the end of it if it is not.
+
+    :param api_name: The API name of the field.
+    :param table: The table that the field is on.
+    :return: The uniqified API name.
+    """
+
+    unique_api_name = api_name
+
+    i = 2
+    while Field.objects.filter(table=table, api_name=unique_api_name, trashed=False).exists():
+        unique_api_name = f"{api_name}_{i}"
+        i += 1
+    
+    return unique_api_name
+
 def generate_field_api_name(field_name: str, table: Table) -> str:
     """
     Generates a unique API name for a field based on the provided field name.
@@ -148,15 +166,9 @@ def generate_field_api_name(field_name: str, table: Table) -> str:
     :return: The generated API name.
     """
 
-    base_api_name = re.sub(r"_+", "_", re.sub(r"[^a-z0-9_]", "_", field_name.lower())).strip("_")
-    api_name = base_api_name
+    api_name = re.sub(r"_+", "_", re.sub(r"[^a-z0-9_]", "_", field_name.lower())).strip("_")
     
-    i = 2
-    while Field.objects.filter(table=table, api_name=api_name, trashed=False).exists():
-        api_name = f"{base_api_name}_{i}"
-        i += 1
-    
-    return api_name
+    return _uniqify_field_api_name(api_name, table)
 
 
 T = TypeVar("T", bound="Field")
@@ -478,8 +490,12 @@ class FieldHandler:
             dependants_broken_due_to_type_change = []
             to_field_type = from_field_type
 
-        allowed_fields = ["name"] + to_field_type.allowed_fields
+        allowed_fields = ["name", "api_name"] + to_field_type.allowed_fields
         field_values = extract_allowed(kwargs, allowed_fields)
+
+        api_name = field_values.get("api_name")
+        if api_name and api_name != old_field.api_name:
+            api_name = _uniqify_field_api_name(api_name, field.table)
 
         self._validate_name_and_optionally_rename_if_collision(
             field, field_values, postfix_to_fix_name_collisions

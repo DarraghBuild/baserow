@@ -67,7 +67,7 @@ class TableImportSerializer(serializers.Serializer):
 class TableUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Table
-        fields = ("name",)
+        fields = ("name", "api_name")
 
 
 class OrderTablesSerializer(serializers.Serializer):

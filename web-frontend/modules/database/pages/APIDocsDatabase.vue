@@ -333,7 +333,7 @@ export default {
           ? field._.responseExample
           : field._.requestExample
         if (this.exampleData.userFieldNames) {
-          item[field.name] = example
+          item[field.api_name] = example
         } else {
           item[`field_${field.id}`] = example
         }
@@ -379,9 +379,9 @@ export default {
       const mapping = {}
       this.fields[table.id].forEach((field) => {
         if (this.exampleData.userFieldNames) {
-          mapping[field.name] = `field_${field.id}`
+          mapping[field.api_name] = `field_${field.id}`
         } else {
-          mapping[`field_${field.id}`] = field.name
+          mapping[`field_${field.id}`] = field.api_name
         }
       })
       return mapping

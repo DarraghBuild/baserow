@@ -23,7 +23,7 @@
       <i class="fas fa-ellipsis-v"></i>
     </a>
     <Context ref="context">
-      <div class="context__menu-title">{{ table.name }} ({{ table.id }})</div>
+      <div class="context__menu-title">{{ table.name }} ({{ table.api_name }})</div>
       <ul class="context__menu">
         <li
           v-for="(component, index) in additionalContextComponents"
@@ -72,6 +72,16 @@
           <a @click="enableRename()">
             <i class="context__menu-icon fas fa-fw fa-pen"></i>
             {{ $t('action.rename') }}
+          </a>
+        </li>
+        <li
+          v-if="
+            $hasPermission('database.table.update', table, database.group.id)
+          "
+        >
+          <a @click="() => {}">
+            <i class="context__menu-icon fas fa-fw fa-file-signature"></i>
+            Change API Name
           </a>
         </li>
         <li

@@ -53,6 +53,24 @@ from .signals import table_created, table_deleted, table_updated, tables_reorder
 
 BATCH_SIZE = 1024
 
+def _uniqify_table_api_name(api_name: str) -> str:
+    """
+    Ensures that the table API name is unique by appending a number to the end of it if it is not.
+
+    :param api_name: The API name of the table.
+    :return: The uniqified API name.
+    """
+
+    unique_api_name = api_name
+
+    i = 2
+    while any(True for _ in filter(lambda v : not TrashHandler.item_has_a_trashed_parent(v), Table.objects.filter(api_name=unique_api_name, trashed=False).iterator())):
+        unique_api_name = f"{api_name}_{i}"
+        i += 1
+    
+    return unique_api_name
+
+
 def generate_table_api_name(table_name: str) -> str:
     """
     Generates a unique API name for a table based on the provided table name.
@@ -62,15 +80,9 @@ def generate_table_api_name(table_name: str) -> str:
     :return: The generated API name.
     """
 
-    base_api_name = re.sub(r"_+", "_", re.sub(r"[^a-z0-9_]", "_", table_name.lower())).strip("_")
-    api_name = base_api_name
-    
-    i = 2
-    while any(True for _ in filter(lambda v : not TrashHandler.item_has_a_trashed_parent(v), Table.objects.filter(api_name=api_name, trashed=False).iterator())):
-        api_name = f"{base_api_name}_{i}"
-        i += 1
-    
-    return api_name
+    api_name = re.sub(r"_+", "_", re.sub(r"[^a-z0-9_]", "_", table_name.lower())).strip("_")
+
+    return _uniqify_table_api_name(api_name)
 
 
 TableForUpdate = NewType("TableForUpdate", Table)
@@ -393,7 +405,7 @@ class TableHandler:
         data = []
         return fields, data
 
-    def update_table_by_id(self, user: AbstractUser, table_id: int, name: str) -> Table:
+    def update_table_by_id(self, user: AbstractUser, table_id: int, name: str, api_name: str) -> Table:
         """
         Updates an existing table instance.
 
@@ -405,15 +417,16 @@ class TableHandler:
         """
 
         table = self.get_table_for_update(table_id)
-        return self.update_table(user, table, name)
+        return self.update_table(user, table, name, api_name)
 
-    def update_table(self, user: AbstractUser, table: Table, name: str) -> Table:
+    def update_table(self, user: AbstractUser, table: Table, name: str, api_name: str) -> Table:
         """
         Updates an existing table instance.
 
         :param user: The user on whose behalf the table is updated.
         :param table: The table instance that needs to be updated.
         :param name: The name to be updated.
+        :param api_name: The api_name to be updated.
         :raises ValueError: When the provided table is not an instance of Table.
         :return: The updated table instance.
         """
@@ -428,7 +441,12 @@ class TableHandler:
             context=table,
         )
 
-        table.name = name
+        if name is not None:
+            table.name = name
+        
+        if api_name is not None:
+            table.api_name = api_name
+
         table.save()
 
         table_updated.send(self, table=table, user=user)
