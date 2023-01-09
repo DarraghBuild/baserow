@@ -66,7 +66,7 @@ def get_include_exclude_fields(
     if user_field_names:
         includes = extract_field_names_from_string(include)
         excludes = extract_field_names_from_string(exclude)
-        filter_type = "name__in"
+        filter_type = "api_name__in"
     else:
         includes = extract_field_ids_from_string(include)
         excludes = extract_field_ids_from_string(exclude)

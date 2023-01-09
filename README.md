@@ -2,6 +2,8 @@
 
 This is a fork of Baserow. Here is what has been changed/added:
 
+* The "User field names" option for the API now causes it to use API names for fields instead of the normal field names. Field API names can be configured on the frontend, and are unique per table.
+* Tables can be interfaced with through the API using API names, which can be configured on the frontend. They do not have to be unique, and if they are not, the newest table with the same API name is preferred.
 * "Super Admins" can be specified by email in `.env`. These are users that get automatically added to every group with admin permissions and cannot be removed.
 * New users without a group invitation no longer get a new group created for them.
 * Thumbnail generation for PDF & other office suite document formats (text, presentation, & spreadsheet), plus more thumbnail sizes.

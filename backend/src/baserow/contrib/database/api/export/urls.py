@@ -6,7 +6,7 @@ app_name = "baserow.contrib.database.api.export"
 
 urlpatterns = [
     re_path(
-        r"table/(?P<table_id>[0-9]+)/$",
+        r"table/(?P<table_id>[a-z0-9_]+)/$",
         ExportTableView.as_view(),
         name="export_table",
     ),

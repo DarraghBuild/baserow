@@ -111,17 +111,21 @@ def snapshot(args):
         print("Please provide USER and PASS env variables in .pass file.")
         return
 
-    res = requests.post(API_URL + "/user/token-auth/", json={
-        "email": auth_vars["USER"],
-        "password": auth_vars["PASS"],
-    })
 
-    if res.status_code != 200:
-        print("Authentication failed")
-        print(res.text)
-        return
+    def auth():
+        res = requests.post(API_URL + "/user/token-auth/", json={
+            "email": auth_vars["USER"],
+            "password": auth_vars["PASS"],
+        })
 
-    token = res.json()["access_token"]
+        if res.status_code != 200:
+            print("Authentication failed")
+            print(res.text)
+            return
+
+        return res.json()["access_token"]
+
+    token = auth()
     headers = { "Authorization": "JWT " + token }
 
     # get all databases
@@ -131,6 +135,11 @@ def snapshot(args):
     snapshot_name = f"snapshot_{today.isoformat()}"
     for app in apps:
         res = requests.get(API_URL + f"/snapshots/application/{app['id']}/", headers=headers)
+        if res.status_code == 401:
+            token = auth()
+            headers = { "Authorization": "JWT " + token }
+            res = requests.get(API_URL + f"/snapshots/application/{app['id']}/", headers=headers)
+
         snapshots = res.json()
         has_today = False
         # delete snapshots older than DAILY_SNAPSHOTS days, except for the first of each month
@@ -141,7 +150,11 @@ def snapshot(args):
                 has_today = True
 
             if (today - date).days > DAILY_SNAPSHOTS and m.group(3) != "01":
-                requests.delete(API_URL + f"/snapshots/{snapshot['id']}/", headers=headers)
+                res = requests.delete(API_URL + f"/snapshots/{snapshot['id']}/", headers=headers)
+                if res.status_code == 401:
+                    token = auth()
+                    headers = { "Authorization": "JWT " + token }
+                    requests.delete(API_URL + f"/snapshots/{snapshot['id']}/", headers=headers)
 
         # create snapshot
         if not has_today:
@@ -151,7 +164,12 @@ def snapshot(args):
                     "name": snapshot_name
                 })
                 pending = res.status_code == 400 and res.json()["error"] == "ERROR_SNAPSHOT_OPERATION_LIMIT_EXCEEDED"
-                if pending:
+                if res.status_code == 401:
+                    pending = True
+                    token = auth()
+                    headers = { "Authorization": "JWT " + token }
+
+                if pending and res.status_code != 401:
                     time.sleep(PENDING_SNAPSHOT_SLEEP)
 
             time.sleep(2)

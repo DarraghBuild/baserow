@@ -20,7 +20,7 @@ class FieldSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Field
-        fields = ("id", "table_id", "name", "order", "type", "primary", "read_only")
+        fields = ("id", "table_id", "name", "api_name", "order", "type", "primary", "read_only")
         extra_kwargs = {
             "id": {"read_only": True},
             "table_id": {"read_only": True},
@@ -80,7 +80,7 @@ class UpdateFieldSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Field
-        fields = ("name", "type")
+        fields = ("name", "api_name", "type")
         extra_kwargs = {
             "name": {"required": False},
         }

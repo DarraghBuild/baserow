@@ -5,6 +5,9 @@
         {{ $t('apiDocsTableFields.tableTitle', table) }}
       </h2>
       <p class="api-docs__content">
+        The API name of this table is:
+        <code class="api-docs__code">{{ table.api_name }}</code>
+        <br>
         {{ $t('apiDocsTableFields.tableId') }}
         <code class="api-docs__code">{{ table.id }}</code>
       </p>
@@ -21,6 +24,7 @@
         <thead>
           <tr>
             <th>{{ $t('apiDocsTableFields.id') }}</th>
+            <th>API Name</th>
             <th>{{ $t('apiDocsTableFields.name') }}</th>
             <th>{{ $t('apiDocsTableFields.type') }}</th>
             <th>
@@ -32,6 +36,7 @@
           <template v-for="field in fields[table.id]">
             <tr :key="field.id + '-1'" class="api-docs__table-without-border">
               <td>field_{{ field.id }}</td>
+              <td>{{ field.api_name }}</td>
               <td>{{ field.name }}</td>
               <td>
                 <code class="api-docs__code margin-bottom-1">
@@ -54,7 +59,7 @@
               </td>
             </tr>
             <tr :key="field.id + '-2'">
-              <td colspan="4">
+              <td colspan="5">
                 <!-- eslint-disable vue/no-v-html -->
                 <div
                   class="api-docs__table-content"

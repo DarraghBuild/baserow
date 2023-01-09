@@ -11,7 +11,7 @@ app_name = "baserow.contrib.database.api.views.grid"
 
 urlpatterns = [
     re_path(
-        r"(?P<view_id>[0-9]+)/aggregation/(?P<field_id>[0-9]+)/$",
+        r"(?P<view_id>[0-9]+)/aggregation/(?P<field_id>[a-z0-9_]+)/$",
         GridViewFieldAggregationView.as_view(),
         name="field-aggregation",
     ),

@@ -1193,6 +1193,7 @@ class CoreHandler:
             progress_builder=progress.create_child_builder(
                 represents_progress=import_progress
             ),
+            generate_new_api_names=True,
         )
 
         # broadcast the application_created signal

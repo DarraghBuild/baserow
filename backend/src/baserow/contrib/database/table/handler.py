@@ -1,6 +1,7 @@
 import logging
 import traceback
-from typing import Any, Dict, List, NewType, Optional, Tuple, cast
+import re
+from typing import Any, Dict, List, NewType, Optional, Tuple, Union, cast
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
@@ -17,7 +18,7 @@ from baserow.contrib.database.fields.exceptions import (
     MaxFieldNameLengthExceeded,
     ReservedBaserowFieldNameException,
 )
-from baserow.contrib.database.fields.handler import FieldHandler
+from baserow.contrib.database.fields.handler import FieldHandler, generate_field_api_name
 from baserow.contrib.database.fields.models import Field
 from baserow.contrib.database.fields.registries import field_type_registry
 from baserow.contrib.database.models import Database
@@ -52,6 +53,38 @@ from .signals import table_created, table_deleted, table_updated, tables_reorder
 
 BATCH_SIZE = 1024
 
+def _uniqify_table_api_name(api_name: str) -> str:
+    """
+    Ensures that the table API name is unique by appending a number to the end of it if it is not.
+
+    :param api_name: The API name of the table.
+    :return: The uniqified API name.
+    """
+
+    unique_api_name = api_name
+
+    i = 2
+    while any(True for _ in filter(lambda v : not TrashHandler.item_has_a_trashed_parent(v), Table.objects.filter(api_name=unique_api_name, trashed=False).iterator())):
+        unique_api_name = f"{api_name}_{i}"
+        i += 1
+    
+    return unique_api_name
+
+
+def generate_table_api_name(table_name: str) -> str:
+    """
+    Generates a unique API name for a table based on the provided table name.
+
+    :param table_name: The name of the table.
+    :param database: The database that the table is on.
+    :return: The generated API name.
+    """
+
+    api_name = re.sub(r"_+", "_", re.sub(r"[^a-z0-9_]", "_", table_name.lower())).strip("_")
+
+    return _uniqify_table_api_name(api_name)
+
+
 TableForUpdate = NewType("TableForUpdate", Table)
 
 logger = logging.getLogger(__name__)
@@ -59,7 +92,7 @@ logger = logging.getLogger(__name__)
 
 class TableHandler:
     def get_table(
-        self, table_id: int, base_queryset: Optional[QuerySet] = None
+        self, table_id: Union[str, int], base_queryset: Optional[QuerySet] = None
     ) -> Table:
         """
         Selects a table with a given id from the database.
@@ -74,8 +107,29 @@ class TableHandler:
         if base_queryset is None:
             base_queryset = Table.objects
 
+        is_int_id = False
         try:
-            table = base_queryset.select_related("database__group").get(id=table_id)
+            table_id = int(table_id)
+            is_int_id = True
+        except ValueError:
+            pass
+
+        try:
+            if is_int_id:
+                table = base_queryset.select_related("database__group").get(id=table_id)
+            else:
+                iter = base_queryset.select_related("database__group").filter(api_name=table_id, trashed=False).order_by("id").reverse().iterator()
+                table = None
+                for iter_table in iter:
+                    if TrashHandler.item_has_a_trashed_parent(iter_table):
+                        continue
+
+                    table = iter_table
+                    break
+
+                if table == None:
+                    raise Table.DoesNotExist()
+
         except Table.DoesNotExist:
             raise TableDoesNotExist(f"The table with id {table_id} does not exist.")
 
@@ -205,10 +259,12 @@ class TableHandler:
         """
 
         last_order = Table.get_last_order(database)
+        api_name = generate_table_api_name(name)
         table = Table.objects.create(
             database=database,
             order=last_order,
             name=name,
+            api_name=api_name,
         )
 
         # Let's create the fields before creating the model so that the whole
@@ -224,6 +280,7 @@ class TableHandler:
                 order=index,
                 primary=index == 0,
                 name=name,
+                api_name=generate_field_api_name(name, table),
                 **field_config,
             )
             if field_options:
@@ -348,7 +405,7 @@ class TableHandler:
         data = []
         return fields, data
 
-    def update_table_by_id(self, user: AbstractUser, table_id: int, name: str) -> Table:
+    def update_table_by_id(self, user: AbstractUser, table_id: int, name: str, api_name: str) -> Table:
         """
         Updates an existing table instance.
 
@@ -360,15 +417,16 @@ class TableHandler:
         """
 
         table = self.get_table_for_update(table_id)
-        return self.update_table(user, table, name)
+        return self.update_table(user, table, name, api_name)
 
-    def update_table(self, user: AbstractUser, table: Table, name: str) -> Table:
+    def update_table(self, user: AbstractUser, table: Table, name: str, api_name: str) -> Table:
         """
         Updates an existing table instance.
 
         :param user: The user on whose behalf the table is updated.
         :param table: The table instance that needs to be updated.
         :param name: The name to be updated.
+        :param api_name: The api_name to be updated.
         :raises ValueError: When the provided table is not an instance of Table.
         :return: The updated table instance.
         """
@@ -383,7 +441,12 @@ class TableHandler:
             context=table,
         )
 
-        table.name = name
+        if name is not None:
+            table.name = name
+        
+        if api_name is not None:
+            table.api_name = api_name
+
         table.save()
 
         table_updated.send(self, table=table, user=user)
@@ -466,6 +529,7 @@ class TableHandler:
             serialized_related_link_row_field = {
                 "id": serialized_field["link_row_related_field_id"],
                 "name": related_field_name,
+                "api_name": generate_field_api_name(related_field_name, link_row_table),
                 "type": LinkRowFieldType.type,
                 "link_row_table_id": serialized_table["id"],
                 "link_row_related_field_id": serialized_field["id"],
@@ -514,6 +578,7 @@ class TableHandler:
         # Set a unique name for the table to import back as a new one.
         exported_table = serialized_tables[0]
         exported_table["name"] = self.find_unused_table_name(database, table.name)
+        exported_table["api_name"] = generate_table_api_name(exported_table["name"])
         exported_table["order"] = Table.get_last_order(database)
 
         id_mapping: Dict[str, Any] = {"database_tables": {}}

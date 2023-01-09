@@ -148,7 +148,7 @@
           class="api-token__row"
         >
           <div class="api-token__table">
-            {{ table.name }} <small>(id: {{ table.id }})</small>
+            {{ table.name }} <small>({{ table.api_name }})</small>
           </div>
           <div class="api-token__permissions">
             <div

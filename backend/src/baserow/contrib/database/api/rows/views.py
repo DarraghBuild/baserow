@@ -202,11 +202,8 @@ class RowsView(APIView):
                     "id `1` and id `2` are going to be selected and included in the "
                     "response. "
                     "If the `user_field_names` parameter is provided then "
-                    "instead include should be a comma separated list of the actual "
-                    "field names. For field names with commas you should surround the "
-                    'name with quotes like so: `include=My Field,"Field With , "`. '
-                    "A backslash can be used to escape field names which contain "
-                    'double quotes like so: `include=My Field,Field with \\"`.'
+                    "instead include should be a comma separated list of the API "
+                    "field names."
                 ),
             ),
             OpenApiParameter(
@@ -221,11 +218,8 @@ class RowsView(APIView):
                     "and id `2` are going to be excluded from the selection and "
                     "response. "
                     "If the `user_field_names` parameter is provided then "
-                    "instead exclude should be a comma separated list of the actual "
-                    "field names. For field names with commas you should surround the "
-                    'name with quotes like so: `exclude=My Field,"Field With , "`. '
-                    "A backslash can be used to escape field names which contain "
-                    'double quotes like so: `exclude=My Field,Field with \\"`.'
+                    "instead exclude should be a comma separated list of the API "
+                    "field names."
                 ),
             ),
             OpenApiParameter(
@@ -234,7 +228,7 @@ class RowsView(APIView):
                 type=OpenApiTypes.BOOL,
                 description=(
                     "A flag query parameter which if provided the returned json "
-                    "will use the user specified field names instead of internal "
+                    "will use the user specified API field names instead of internal "
                     "Baserow field names (field_123 etc). "
                 ),
             ),
@@ -257,7 +251,7 @@ class RowsView(APIView):
             "use the **list_database_table_fields** endpoint to list them all. In the "
             "example all field types are listed, but normally the number in "
             "field_{id} key is going to be the id of the field. Or if the GET "
-            "parameter `user_field_names` is provided then the keys will be the name "
+            "parameter `user_field_names` is provided then the keys will be the API name "
             "of the field. The value is what the user has provided and the format of "
             "it depends on the fields type."
         ),
@@ -389,7 +383,7 @@ class RowsView(APIView):
                 type=OpenApiTypes.BOOL,
                 description=(
                     "A flag query parameter which if provided this endpoint will "
-                    "expect and return the user specified field names instead of "
+                    "expect and return the user specified API field names instead of "
                     "internal Baserow field names (field_123 etc)."
                 ),
             ),
@@ -407,11 +401,11 @@ class RowsView(APIView):
             "`false` or some default value is that is set. If you want to add a value "
             "for the field with for example id `10`, the key must be named `field_10`. "
             "Or instead if the `user_field_names` GET param is provided the key must "
-            "be the name of the field. Of course multiple fields can be provided in "
+            "be the API name of the field. Of course multiple fields can be provided in "
             "one request. In the examples below you will find all the different field "
             "types, the numbers/ids in the example are just there for example "
             "purposes, the field_ID must be replaced with the actual id of the field "
-            "or the name of the field if `user_field_names` is provided."
+            "or the API name of the field if `user_field_names` is provided."
         ),
         request=get_example_row_serializer_class(
             example_type="post", user_field_names=True
@@ -629,7 +623,7 @@ class RowView(APIView):
                 type=OpenApiTypes.BOOL,
                 description=(
                     "A flag query parameter which if provided the returned json "
-                    "will use the user specified field names instead of internal "
+                    "will use the user specified API field names instead of internal "
                     "Baserow field names (field_123 etc). "
                 ),
             ),
@@ -643,7 +637,7 @@ class RowView(APIView):
             "**list_database_table_fields** endpoint to list them all. In the example "
             "all field types are listed, but normally the number in field_{id} key is "
             "going to be the id of the field of the field. Or if the GET parameter "
-            "`user_field_names` is provided then the keys will be the name of the "
+            "`user_field_names` is provided then the keys will be the API name of the "
             "field. The value is what the user has provided and the format of it "
             "depends on the fields type."
         ),
@@ -707,7 +701,7 @@ class RowView(APIView):
                 type=OpenApiTypes.BOOL,
                 description=(
                     "A flag query parameter which if provided this endpoint will "
-                    "expect and return the user specified field names instead of "
+                    "expect and return the user specified API field names instead of "
                     "internal Baserow field names (field_123 etc)."
                 ),
             ),
@@ -725,11 +719,11 @@ class RowView(APIView):
             "be updated. "
             "When you want to update a value for the field with id `10`, the key must "
             "be named `field_10`. Or if the GET parameter `user_field_names` is "
-            "provided the key of the field to update must be the name of the field. "
+            "provided the key of the field to update must be the API name of the field. "
             "Multiple different fields to update can be provided in one request. In "
             "the examples below you will find all the different field types, the "
             "numbers/ids in the example are just there for example purposes, "
-            "the field_ID must be replaced with the actual id of the field or the name "
+            "the field_ID must be replaced with the actual id of the field or the API name "
             "of the field if `user_field_names` is provided."
         ),
         request=get_example_row_serializer_class(
@@ -900,7 +894,7 @@ class RowMoveView(APIView):
                 type=OpenApiTypes.BOOL,
                 description=(
                     "A flag query parameter which if provided the returned json "
-                    "will use the user specified field names instead of internal "
+                    "will use the user specified API field names instead of internal "
                     "Baserow field names (field_123 etc). "
                 ),
             ),
@@ -992,7 +986,7 @@ class BatchRowsView(APIView):
                 type=OpenApiTypes.BOOL,
                 description=(
                     "A flag query parameter which if provided this endpoint will "
-                    "expect and return the user specified field names instead of "
+                    "expect and return the user specified API field names instead of "
                     "internal Baserow field names (field_123 etc)."
                 ),
             ),
@@ -1010,11 +1004,11 @@ class BatchRowsView(APIView):
             "`false` or some default value is that is set. If you want to add a value "
             "for the field with for example id `10`, the key must be named `field_10`. "
             "Or instead if the `user_field_names` GET param is provided the key must "
-            "be the name of the field. Of course multiple fields can be provided in "
+            "be the API name of the field. Of course multiple fields can be provided in "
             "one request. In the examples below you will find all the different field "
             "types, the numbers/ids in the example are just there for example "
             "purposes, the field_ID must be replaced with the actual id of the field "
-            "or the name of the field if `user_field_names` is provided."
+            "or the API name of the field if `user_field_names` is provided."
             "\n\n **WARNING:** This endpoint doesn't yet work with row created webhooks."
         ),
         request=get_example_batch_rows_serializer_class(
@@ -1107,7 +1101,7 @@ class BatchRowsView(APIView):
                 type=OpenApiTypes.BOOL,
                 description=(
                     "A flag query parameter which if provided this endpoint will "
-                    "expect and return the user specified field names instead of "
+                    "expect and return the user specified API field names instead of "
                     "internal Baserow field names (field_123 etc)."
                 ),
             ),
@@ -1125,11 +1119,11 @@ class BatchRowsView(APIView):
             "be updated. "
             "When you want to update a value for the field with id `10`, the key must "
             "be named `field_10`. Or if the GET parameter `user_field_names` is "
-            "provided the key of the field to update must be the name of the field. "
+            "provided the key of the field to update must be the API name of the field. "
             "Multiple different fields to update can be provided for each row. In "
             "the examples below you will find all the different field types, the "
             "numbers/ids in the example are just there for example purposes, "
-            "the field_ID must be replaced with the actual id of the field or the name "
+            "the field_ID must be replaced with the actual id of the field or the API name "
             "of the field if `user_field_names` is provided."
             "\n\n **WARNING:** This endpoint doesn't yet work with row updated webhooks."
         ),
@@ -1303,7 +1297,7 @@ class RowAdjacentView(APIView):
                 type=OpenApiTypes.BOOL,
                 description=(
                     "A flag query parameter which if provided the returned json "
-                    "will use the user specified field names instead of internal "
+                    "will use the user specified API field names instead of internal "
                     "Baserow field names (field_123 etc). "
                 ),
             ),

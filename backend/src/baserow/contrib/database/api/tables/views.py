@@ -395,7 +395,7 @@ class TableView(APIView):
         table = action_type_registry.get_by_type(UpdateTableActionType).do(
             request.user,
             TableHandler().get_table(table_id),
-            name=data["name"],
+            data,
         )
 
         serializer = TableSerializer(table)

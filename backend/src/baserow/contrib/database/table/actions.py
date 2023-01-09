@@ -183,9 +183,11 @@ class UpdateTableActionType(ActionType):
         table_id: int
         original_table_name: str
         new_table_name: str
+        original_table_api_name: str
+        new_table_api_name: str
 
     @classmethod
-    def do(cls, user: AbstractUser, table: Table, name: str) -> Table:
+    def do(cls, user: AbstractUser, table: Table, data: dict) -> Table:
         """
         Updates the table.
         See baserow.contrib.database.table.handler.TableHandler.update_table
@@ -201,13 +203,19 @@ class UpdateTableActionType(ActionType):
         """
 
         original_table_name = table.name
+        original_table_api_name = table.api_name
 
-        TableHandler().update_table(user, table, name=name)
+        name = data.get("name")
+        api_name = data.get("api_name")
+
+        TableHandler().update_table(user, table, name=name, api_name=api_name)
 
         params = cls.Params(
-            table.id,
-            original_table_name,
-            new_table_name=name,
+            table_id=table.id,
+            original_table_name=original_table_name,
+            new_table_name=(name or original_table_name),
+            original_table_api_name=original_table_api_name,
+            new_table_api_name=(api_name or original_table_api_name),
         )
 
         cls.register_action(user, params, cls.scope(table.database_id))
@@ -220,13 +228,13 @@ class UpdateTableActionType(ActionType):
     @classmethod
     def undo(cls, user: AbstractUser, params: Params, action_being_undone: Action):
         TableHandler().update_table_by_id(
-            user, params.table_id, name=params.original_table_name
+            user, params.table_id, name=params.original_table_name, api_name=params.original_table_api_name
         )
 
     @classmethod
     def redo(cls, user: AbstractUser, params: Params, action_being_redone: Action):
         TableHandler().update_table_by_id(
-            user, params.table_id, name=params.new_table_name
+            user, params.table_id, name=params.new_table_name, api_name=params.new_table_api_name
         )
 
 

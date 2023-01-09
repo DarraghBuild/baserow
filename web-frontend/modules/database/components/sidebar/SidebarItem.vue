@@ -7,11 +7,14 @@
       @mousedown.prevent
       @click.prevent="selectTable(database, table)"
     >
+      <!--
       <Editable
         ref="rename"
         :value="table.name"
         @change="renameTable(database, table, $event)"
       ></Editable>
+      -->
+      {{ table.name }}
     </a>
     <a
       v-show="!database._.loading"
@@ -23,7 +26,7 @@
       <i class="fas fa-ellipsis-v"></i>
     </a>
     <Context ref="context">
-      <div class="context__menu-title">{{ table.name }} ({{ table.id }})</div>
+      <div class="context__menu-title">{{ table.name }} ({{ table.api_name }})</div>
       <ul class="context__menu">
         <li
           v-for="(component, index) in additionalContextComponents"
@@ -64,6 +67,7 @@
             Webhooks
           </a>
         </li>
+        <!--
         <li
           v-if="
             $hasPermission('database.table.update', table, database.group.id)
@@ -73,6 +77,38 @@
             <i class="context__menu-icon fas fa-fw fa-pen"></i>
             {{ $t('action.rename') }}
           </a>
+        </li>
+        -->
+        <li
+          v-if="
+            $hasPermission(
+              'database.table.update',
+              table,
+              database.group.id
+            )
+          "
+        >
+          <a
+            ref="updateTableContextLink"
+            class="grid-view__description-options"
+            @click="
+              $refs.updateTableContext.toggle(
+                $refs.updateTableContextLink,
+                'bottom',
+                'left',
+                0
+              )
+            "
+          >
+            <i class="context__menu-icon fas fa-fw fa-pen"></i>
+            Edit Table
+          </a>
+          <UpdateTableContext
+            ref="updateTableContext"
+            :database="database"
+            :table="table"
+            @updated="$refs.context.hide()"
+          ></UpdateTableContext>
         </li>
         <li
           v-if="
@@ -115,6 +151,7 @@ import { notifyIf } from '@baserow/modules/core/utils/error'
 import ExportTableModal from '@baserow/modules/database/components/export/ExportTableModal'
 import WebhookModal from '@baserow/modules/database/components/webhook/WebhookModal'
 import SidebarDuplicateTableContextItem from '@baserow/modules/database/components/sidebar/table/SidebarDuplicateTableContextItem'
+import UpdateTableContext from '@baserow/modules/database/components/sidebar/table/UpdateTableContext'
 
 export default {
   name: 'SidebarItem',
@@ -122,6 +159,7 @@ export default {
     ExportTableModal,
     WebhookModal,
     SidebarDuplicateTableContextItem,
+    UpdateTableContext,
   },
   props: {
     database: {
@@ -202,6 +240,13 @@ export default {
         () => {
           this.setLoading(database, false)
         }
+      )
+    },
+    showUpdateTableContext() {
+      this.$refs.updateTableContext.toggle(
+        this.$refs.updateTableContextLink,
+        'bottom',
+        'left'
       )
     },
     exportTable() {
