@@ -443,6 +443,7 @@ class FieldType(
 
         values = {
             "name": field.name,
+            "api_name": field.api_name,
         }
 
         values.update({key: getattr(field, key) for key in self.allowed_fields})
@@ -679,6 +680,7 @@ class FieldType(
             "id": field.id,
             "type": self.type,
             "name": field.name,
+            "api_name": field.api_name,
             "order": field.order,
             "primary": field.primary,
         }

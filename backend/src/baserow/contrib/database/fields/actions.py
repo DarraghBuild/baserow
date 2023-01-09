@@ -214,6 +214,10 @@ class UpdateFieldActionType(ActionType):
         else:
             if "name" not in field_attrs_being_updated:
                 original_exported_values.pop("name")
+
+            if "api_name" not in field_attrs_being_updated:
+                original_exported_values.pop("api_name")
+
         return original_exported_values
 
     @classmethod

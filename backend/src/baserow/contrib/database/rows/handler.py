@@ -718,7 +718,7 @@ class RowHandler:
 
         to_internal_name = {}
         for field_object in field_objects.values():
-            to_internal_name[field_object["field"].name] = field_object["name"]
+            to_internal_name[field_object["field"].api_name] = field_object["name"]
 
         mapped_back_to_internal_field_names = {}
         for user_field_name, value in values.items():

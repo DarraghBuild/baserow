@@ -23,7 +23,7 @@
           :class="{ active: navActive === 'section-table-' + table.id }"
           @click.prevent="navigate('section-table-' + table.id)"
           >{{ $t('apiDocs.table', table) }}
-          <small>(id: {{ table.id }})</small></a
+          <small>({{ table.api_name }})</small></a
         >
         <ul
           class="api-docs__nav-sub"

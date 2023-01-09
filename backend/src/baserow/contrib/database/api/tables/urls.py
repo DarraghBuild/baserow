@@ -24,13 +24,13 @@ urlpatterns = [
         name="order",
     ),
     re_path(
-        r"(?P<table_id>[0-9]+)/duplicate/async/$",
+        r"(?P<table_id>[a-z0-9_]+)/duplicate/async/$",
         AsyncDuplicateTableView.as_view(),
         name="async_duplicate",
     ),
-    re_path(r"(?P<table_id>[0-9]+)/$", TableView.as_view(), name="item"),
+    re_path(r"(?P<table_id>[a-z0-9_]+)/$", TableView.as_view(), name="item"),
     re_path(
-        r"(?P<table_id>[0-9]+)/import/async/$",
+        r"(?P<table_id>[a-z0-9_]+)/import/async/$",
         AsyncTableImportView.as_view(),
         name="import_async",
     ),

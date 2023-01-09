@@ -9,9 +9,9 @@ from baserow.contrib.database.api.webhooks.views import (
 app_name = "baserow.contrib.database.api.webhooks"
 
 urlpatterns = [
-    re_path(r"table/(?P<table_id>[0-9]+)/$", TableWebhooksView.as_view(), name="list"),
+    re_path(r"table/(?P<table_id>[a-z0-9_]+)/$", TableWebhooksView.as_view(), name="list"),
     re_path(
-        r"table/(?P<table_id>[0-9]+)/test-call/$",
+        r"table/(?P<table_id>[a-z0-9_]+)/test-call/$",
         TableWebhookTestCallView.as_view(),
         name="test",
     ),

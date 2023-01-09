@@ -82,11 +82,11 @@ def get_row_serializer_class(
     for field in field_objects.values():
         field_id_matches = field_ids is None or (field["field"].id in field_ids)
         field_name_matches = field_names_to_include is None or (
-            field["field"].name in field_names_to_include
+            field["field"].api_name in field_names_to_include
         )
 
         if field_id_matches and field_name_matches:
-            name = field["field"].name if user_field_names else field["name"]
+            name = field["field"].api_name if user_field_names else field["name"]
             extra_kwargs = field_kwargs.get(field["name"], {})
 
             if field["name"] != name:
@@ -321,7 +321,7 @@ def remap_serialized_row_to_user_field_names(
     for field_id, field_object in model._field_objects.items():
         name = f"field_{field_id}"
         if name in new_row:
-            new_name = field_object["field"].name
+            new_name = field_object["field"].api_name
             new_row[new_name] = new_row.pop(name)
     return new_row
 

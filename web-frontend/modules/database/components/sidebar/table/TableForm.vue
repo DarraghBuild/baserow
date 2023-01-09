@@ -8,7 +8,7 @@
           :class="{ 'input--error': fieldHasErrors('name') }"
           type="text"
           class="input"
-          :placeholder="$t('fieldForm.name')"
+          placeholder="Table"
           @blur="$v.values.name.$touch()"
         />
         <div
@@ -16,23 +16,6 @@
           class="error"
         >
           {{ $t('error.requiredField') }}
-        </div>
-        <div
-          v-else-if="
-            $v.values.name.$dirty && !$v.values.name.mustHaveUniqueFieldName
-          "
-          class="error"
-        >
-          {{ $t('fieldForm.fieldAlreadyExists') }}
-        </div>
-        <div
-          v-else-if="
-            $v.values.name.$dirty &&
-            !$v.values.name.mustNotClashWithReservedName
-          "
-          class="error"
-        >
-          {{ $t('error.nameNotAllowed') }}
         </div>
         <div
           v-else-if="$v.values.name.$dirty && !$v.values.name.maxLength"
@@ -62,11 +45,11 @@
         </div>
         <div
           v-else-if="
-            $v.values.api_name.$dirty && !$v.values.api_name.mustHaveUniqueFieldAPIName
+            $v.values.api_name.$dirty && !$v.values.api_name.mustHaveUniqueTableAPIName
           "
           class="error"
         >
-          {{ $t('fieldForm.fieldAlreadyExists') }}
+          A table with this API name already exists.
         </div>
         <div
           v-else-if="
@@ -91,38 +74,6 @@
         </div>
       </div>
     </FormElement>
-    <div v-if="forcedType === null" class="control">
-      <div class="control__elements">
-        <Dropdown
-          v-model="values.type"
-          :class="{ 'dropdown--error': $v.values.type.$error }"
-          @hide="$v.values.type.$touch()"
-        >
-          <DropdownItem
-            v-for="(fieldType, type) in fieldTypes"
-            :key="type"
-            :icon="fieldType.iconClass"
-            :name="fieldType.getName()"
-            :value="fieldType.type"
-            :disabled="primary && !fieldType.canBePrimaryField"
-          ></DropdownItem>
-        </Dropdown>
-        <div v-if="$v.values.type.$error" class="error">
-          {{ $t('error.requiredField') }}
-        </div>
-      </div>
-    </div>
-    <template v-if="hasFormComponent">
-      <component
-        :is="getFormComponent(values.type)"
-        ref="childForm"
-        :table="table"
-        :field-type="values.type"
-        :name="values.name"
-        :default-values="defaultValues"
-        @validate="$v.$touch"
-      />
-    </template>
     <slot></slot>
   </form>
 </template>
@@ -131,56 +82,44 @@
 import { required, maxLength } from 'vuelidate/lib/validators'
 
 import form from '@baserow/modules/core/mixins/form'
-import { mapGetters } from 'vuex'
+import { DatabaseApplicationType } from '@baserow/modules/database/applicationTypes'
 import {
-  RESERVED_BASEROW_FIELD_NAMES,
   MAX_FIELD_NAME_LENGTH,
 } from '@baserow/modules/database/utils/constants'
 
 // @TODO focus form on open
 export default {
-  name: 'FieldForm',
+  name: 'TableForm',
   mixins: [form],
   props: {
     table: {
       type: Object,
       required: true,
     },
-    primary: {
-      type: Boolean,
-      required: false,
-      default: false,
-    },
-    forcedType: {
-      type: [String, null],
-      required: false,
-      default: null,
-    },
   },
   data() {
     return {
-      allowedValues: ['name', 'api_name', 'type'],
+      allowedValues: ['name', 'api_name'],
       values: {
         name: '',
         api_name: '',
-        type: this.forcedType || '',
       },
       api_name_focused: false,
     }
   },
   computed: {
-    fieldTypes() {
-      return this.$registry.getAll('field')
-    },
-    hasFormComponent() {
-      return !!this.values.type && this.getFormComponent(this.values.type)
-    },
-    existingFieldId() {
+    existingTableId() {
       return this.defaultValues ? this.defaultValues.id : null
     },
-    ...mapGetters({
-      fields: 'field/getAll',
-    }),
+    tables() {
+      const databaseType = DatabaseApplicationType.getType()
+      return this.$store.getters['application/getAll'].filter(
+        (application) => application.type === databaseType
+      ).reduce((acc, application) => {
+        acc.push(...application.tables)
+        return acc
+      }, [])
+    }
   },
   validations() {
     return {
@@ -188,43 +127,27 @@ export default {
         name: {
           required,
           maxLength: maxLength(MAX_FIELD_NAME_LENGTH),
-          mustHaveUniqueFieldName: this.mustHaveUniqueFieldName,
-          mustNotClashWithReservedName: this.mustNotClashWithReservedName,
         },
         api_name: {
           required,
           maxLength: maxLength(MAX_FIELD_NAME_LENGTH),
-          mustHaveUniqueFieldAPIName: this.mustHaveUniqueFieldAPIName,
+          mustHaveUniqueTableAPIName: this.mustHaveUniqueTableAPIName,
           mustUseValidAPINameCharacters: this.mustUseValidAPINameCharacters,
         },
-        type: { required },
       },
     }
   },
   methods: {
-    mustHaveUniqueFieldName(param) {
-      let fields = this.fields
-      if (this.existingFieldId !== null) {
-        fields = fields.filter((f) => f.id !== this.existingFieldId)
+    mustHaveUniqueTableAPIName(param) {
+      let tables = this.tables
+      if (this.existingTableId !== null) {
+        tables = tables.filter((t) => t.id !== this.existingTableId)
       }
-      return !fields.map((f) => f.name).includes(param.trim())
-    },
-    mustHaveUniqueFieldAPIName(param) {
-      let fields = this.fields
-      if (this.existingFieldId !== null) {
-        fields = fields.filter((f) => f.id !== this.existingFieldId)
-      }
-      return !fields.map((f) => f.api_name).includes(param.trim())
+      return !tables.map((t) => t.api_name).includes(param.trim())
     },
     mustUseValidAPINameCharacters(param) {
       param = param.trim()
       return /^[a-z0-9_]+$/.test(param) && param.slice(0) !== "_" && param.slice(-1) !== "_" && !(/__/.test(param))
-    },
-    mustNotClashWithReservedName(param) {
-      return !RESERVED_BASEROW_FIELD_NAMES.includes(param.trim())
-    },
-    getFormComponent(type) {
-      return this.$registry.get('field', type).getFormComponent()
     },
   },
 }

@@ -4,6 +4,8 @@ from baserow.core.exceptions import LockConflict
 class TableDoesNotExist(Exception):
     """Raised when trying to get a table that doesn't exist."""
 
+class DuplicateTableAPIName(Exception):
+    """Raised when trying to get a table with an API name that refers to multiple tables."""
 
 class TableNotInDatabase(Exception):
     """Raised when a provided table does not belong to a database."""
