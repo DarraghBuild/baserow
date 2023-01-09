@@ -215,7 +215,7 @@ class UpdateTableActionType(ActionType):
             original_table_name=original_table_name,
             new_table_name=(name or original_table_name),
             original_table_api_name=original_table_api_name,
-            new_api_name=(api_name or original_table_api_name),
+            new_table_api_name=(api_name or original_table_api_name),
         )
 
         cls.register_action(user, params, cls.scope(table.database_id))
