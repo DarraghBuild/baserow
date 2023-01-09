@@ -45,14 +45,6 @@
         </div>
         <div
           v-else-if="
-            $v.values.api_name.$dirty && !$v.values.api_name.mustHaveUniqueTableAPIName
-          "
-          class="error"
-        >
-          A table with this API name already exists.
-        </div>
-        <div
-          v-else-if="
             $v.values.api_name.$dirty && !$v.values.api_name.mustUseValidAPINameCharacters
           "
           class="error"
@@ -82,7 +74,6 @@
 import { required, maxLength } from 'vuelidate/lib/validators'
 
 import form from '@baserow/modules/core/mixins/form'
-import { DatabaseApplicationType } from '@baserow/modules/database/applicationTypes'
 import {
   MAX_FIELD_NAME_LENGTH,
 } from '@baserow/modules/database/utils/constants'
@@ -111,15 +102,6 @@ export default {
     existingTableId() {
       return this.defaultValues ? this.defaultValues.id : null
     },
-    tables() {
-      const databaseType = DatabaseApplicationType.getType()
-      return this.$store.getters['application/getAll'].filter(
-        (application) => application.type === databaseType
-      ).reduce((acc, application) => {
-        acc.push(...application.tables)
-        return acc
-      }, [])
-    }
   },
   validations() {
     return {
@@ -131,20 +113,12 @@ export default {
         api_name: {
           required,
           maxLength: maxLength(MAX_FIELD_NAME_LENGTH),
-          mustHaveUniqueTableAPIName: this.mustHaveUniqueTableAPIName,
           mustUseValidAPINameCharacters: this.mustUseValidAPINameCharacters,
         },
       },
     }
   },
   methods: {
-    mustHaveUniqueTableAPIName(param) {
-      let tables = this.tables
-      if (this.existingTableId !== null) {
-        tables = tables.filter((t) => t.id !== this.existingTableId)
-      }
-      return !tables.map((t) => t.api_name).includes(param.trim())
-    },
     mustUseValidAPINameCharacters(param) {
       param = param.trim()
       return /^[a-z0-9_]+$/.test(param) && param.slice(0) !== "_" && param.slice(-1) !== "_" && !(/__/.test(param))
