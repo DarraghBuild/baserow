@@ -1,5 +1,10 @@
 from django.db import connection, migrations, models
 
+from baserow.core.management.commands.generate_missing_api_names import Command
+
+def forward(apps, schema_editor):
+    Command().handle()
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -17,4 +22,5 @@ class Migration(migrations.Migration):
             name="api_name",
             field=models.CharField(max_length=255, default=""),
         ),
+        migrations.RunPython(forward, migrations.RunPython.noop),
     ]
