@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
 
-import os, argparse, datetime, re, subprocess, requests, time
+import os, sys, argparse, datetime, re, subprocess, requests, time, tempfile
+from typing import Callable, Optional
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 BACKUP_DIR = "db_backups"
 DAILY_BACKUPS = 7
 DAILY_SNAPSHOTS = 14
 PENDING_SNAPSHOT_SLEEP = 10
-API_URL = "https://fergtable.com/api"
+#API_URL = "https://fergtable.com/api"
+API_URL = "http://localhost/api"
 ISO_DATE_PATTERN = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
 
 # create backups dir
 if not os.path.isdir(os.path.join(SCRIPT_DIR, BACKUP_DIR)):
     os.mkdir(os.path.join(SCRIPT_DIR, BACKUP_DIR))
 
-def backup(args):
+def backup(parser, args):
     # create a backup with pg_dump named with the current date
     os.chdir(SCRIPT_DIR)
     fn = f"backup_{datetime.date.today().isoformat()}.tar"
@@ -32,9 +34,9 @@ def backup(args):
         docker cp fergtable-db-1:{fn} {os.path.join(BACKUP_DIR, "")}
         docker exec fergtable-db-1 bash -c "rm {fn}"
         docker compose down
-    """, capture_output=True, shell=True).stderr.decode("utf-8"))
+    """, capture_output=True, shell=True).stderr.decode("utf-8"), end="")
 
-    print(f"Saved to backups/{fn}")
+    print(f"Saved to {os.path.join(BACKUP_DIR, fn)}")
 
     if args.restart:
         restart_cmd = "docker compose up -d"
@@ -50,7 +52,7 @@ def backup(args):
 
         subprocess.run(restart_cmd, shell=True)
 
-def restore(args):
+def restore(parser, args):
     # restore the given backup with pg_restore
     restore_file = os.path.abspath(args.file)
     os.chdir(SCRIPT_DIR)
@@ -63,14 +65,14 @@ def restore(args):
         docker exec fergtable-db-1 bash -c "dropdb baserow -U baserow && createdb baserow -U baserow && pg_restore {os.path.basename(restore_file)} -d baserow -U baserow -F t"
         docker exec fergtable-db-1 bash -c "rm -f {os.path.basename(restore_file)}"
         docker compose down
-    """, capture_output=True, shell=True).stderr.decode("utf-8"))
+    """, capture_output=True, shell=True).stderr.decode("utf-8"), end="")
 
     print(f"Restored")
 
     if args.restart:
         subprocess.run("docker compose up -d", shell=True)
 
-def clean(args):
+def clean(parser, args):
     # delete backups older than DAILY_BACKUPS days, except for the first of each month
     os.chdir(SCRIPT_DIR)
     files = list(filter(lambda x : x.endswith(".tar"), os.listdir(BACKUP_DIR)))
@@ -86,44 +88,17 @@ def clean(args):
                     continue
 
                 os.remove(os.path.join(BACKUP_DIR, file))
+    
+    # remove exported zip files
+    files = list(filter(lambda x : x.endswith(".zip"), os.listdir(BACKUP_DIR)))
+    for file in files:
+        os.remove(os.path.join(BACKUP_DIR, file))
 
-def snapshot(args):
+def snapshot(parser, args):
     # create a snapshot of every database. authenticates as an admin user through the API
-    os.chdir(SCRIPT_DIR)
-    auth_vars = {}
-    if not os.path.isfile(".pass"):
-        print("Please create file .pass in script directory.")
+    auth = API_superadmin_auth()
+    if not auth:
         return
-
-    with open(".pass", "r") as f:
-        for line in f:
-            line = line.strip()
-            if line.startswith("#") or not line:
-                continue
-
-            key, value = line.split("=", 1)
-            if value[0] == value[-1] and (value[0] == "'" or value[0] == '"'):
-                value = value[1:-1]
-
-            auth_vars[key] = value
-
-    if "USER" not in auth_vars or "PASS" not in auth_vars:
-        print("Please provide USER and PASS env variables in .pass file.")
-        return
-
-
-    def auth():
-        res = requests.post(API_URL + "/user/token-auth/", json={
-            "email": auth_vars["USER"],
-            "password": auth_vars["PASS"],
-        })
-
-        if res.status_code != 200:
-            print("Authentication failed")
-            print(res.text)
-            return
-
-        return res.json()["access_token"]
 
     token = auth()
     headers = { "Authorization": "JWT " + token }
@@ -145,6 +120,9 @@ def snapshot(args):
         # delete snapshots older than DAILY_SNAPSHOTS days, except for the first of each month
         for snapshot in snapshots:
             m = ISO_DATE_PATTERN.search(snapshot["created_at"])
+            if not m:
+                continue
+
             date = datetime.date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
             if date == today:
                 has_today = True
@@ -177,7 +155,197 @@ def snapshot(args):
             if res.status_code != 200:
                 print(f"Error {res.status_code}: {res.text}")
 
-def get_file_arg(parser, fp: str) -> str:
+def export_data(parser, args):
+    os.chdir(SCRIPT_DIR)
+    if args.type == "group":
+        zip_name = f"group_{args.id}_exported.zip"
+        data_files_name = f"group_{args.id}_data"
+        group_name = "Untitled Group"
+
+        auth = API_superadmin_auth()
+        if not auth:
+            return
+
+        token = auth()
+        headers = { "Authorization": "JWT " + token }
+
+        # get group name
+        res = requests.get(API_URL + "/groups/", headers=headers)
+        groups = res.json()
+        for group in groups:
+            if group["id"] == args.id:
+                group_name = group["name"]
+                break
+        
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            with open(os.path.join(tmp_dir, "group_name"), "w") as f:
+                f.write(group_name)
+
+            # export data & zip everything
+            print(subprocess.run(f"""
+                ./django-cmd export_group_applications {args.id} --name {data_files_name}
+                sleep 1
+                docker cp fergtable-backend-1:/baserow/backend/{data_files_name}.json {os.path.join(tmp_dir, "")}
+                docker cp fergtable-backend-1:/baserow/backend/{data_files_name}.zip {os.path.join(tmp_dir, "")}
+                docker exec fergtable-backend-1 bash -c "rm {data_files_name}.json {data_files_name}.zip"
+                cd {tmp_dir}
+                zip {zip_name} ./*
+                cd {SCRIPT_DIR}
+                mv {os.path.join(tmp_dir, zip_name)} {os.path.join(BACKUP_DIR, "")}
+            """, capture_output=True, shell=True).stderr.decode("utf-8"), end="")
+    
+        print(f"Saved to {os.path.join(BACKUP_DIR, zip_name)}")
+
+    elif args.type == "database":
+        zip_name = f"app_{args.id}_exported.zip"
+        data_files_name = f"app_{args.id}_data"
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            # export data & zip everything
+            print(subprocess.run(f"""
+                ./django-cmd export_single_application {args.id} --name {data_files_name}
+                sleep 1
+                docker cp fergtable-backend-1:/baserow/backend/{data_files_name}.json {os.path.join(tmp_dir, "")}
+                docker cp fergtable-backend-1:/baserow/backend/{data_files_name}.zip {os.path.join(tmp_dir, "")}
+                docker exec fergtable-backend-1 bash -c "rm {data_files_name}.json {data_files_name}.zip"
+                cd {tmp_dir}
+                zip {zip_name} ./*
+                cd {SCRIPT_DIR}
+                mv {os.path.join(tmp_dir, zip_name)} {os.path.join(BACKUP_DIR, "")}
+            """, capture_output=True, shell=True).stderr.decode("utf-8"), end="")
+    
+        print(f"Saved to {os.path.join(BACKUP_DIR, zip_name)}")
+
+def import_data(parser, args):
+    os.chdir(SCRIPT_DIR)
+    if args.type == "group":
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            print(subprocess.run(f"""
+                unzip {args.file} -d {tmp_dir}
+            """, capture_output=True, shell=True).stderr.decode("utf-8"), end="")
+
+            group_id = args.group
+            new_group = False
+            if group_id is None:
+                # create a new group
+                new_group = True
+                with open(os.path.join(tmp_dir, "group_name"), "r") as f:
+                    group_name = f.read().strip()
+
+                auth = API_superadmin_auth()
+                if not auth:
+                    return
+
+                token = auth()
+                headers = { "Authorization": "JWT " + token }
+
+                res = requests.post(API_URL + "/groups/", headers=headers, json={ "name": group_name })
+                group_id = res.json()["id"]
+
+            data_files_name = None
+            files = os.listdir(tmp_dir)
+            for file in files:
+                if file.endswith(".json"):
+                    data_files_name = file[:-5]
+                    break
+            
+            if not data_files_name:
+                print("Invalid zip file")
+                return
+
+            # import data
+            print(subprocess.run(f"""
+                docker cp {os.path.join(tmp_dir, data_files_name + ".json")} fergtable-backend-1:/baserow/backend/
+                docker cp {os.path.join(tmp_dir, data_files_name + ".zip")} fergtable-backend-1:/baserow/backend/
+                sleep 1
+                ./django-cmd import_group_applications {group_id} {data_files_name}
+                docker exec fergtable-backend-1 bash -c "rm {data_files_name}.json {data_files_name}.zip"
+            """, capture_output=True, shell=True).stderr.decode("utf-8"), end="")
+    
+        print(f"Imported into{' new ' if new_group else ' '}group {group_id}")
+        if new_group:
+            print("You will need to invite users to it with a super admin account")
+
+    elif args.type == "database":
+        if args.group is None:
+            parser.error("argument --group is required when importing a database")
+        
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            print(subprocess.run(f"""
+                unzip {args.file} -d {tmp_dir}
+            """, capture_output=True, shell=True).stderr.decode("utf-8"), end="")
+
+            data_files_name = None
+            files = os.listdir(tmp_dir)
+            for file in files:
+                if file.endswith(".json"):
+                    data_files_name = file[:-5]
+                    break
+            
+            if not data_files_name:
+                print("Invalid zip file")
+                return
+
+            # import data
+            print(subprocess.run(f"""
+                docker cp {os.path.join(tmp_dir, data_files_name + ".json")} fergtable-backend-1:/baserow/backend/
+                docker cp {os.path.join(tmp_dir, data_files_name + ".zip")} fergtable-backend-1:/baserow/backend/
+                sleep 1
+                ./django-cmd import_group_applications {args.group} {data_files_name}
+                docker exec fergtable-backend-1 bash -c "rm {data_files_name}.json {data_files_name}.zip"
+            """, capture_output=True, shell=True).stderr.decode("utf-8"), end="")
+
+        print(f"Imported into group {args.group}")
+
+def API_superadmin_auth() -> Optional[Callable[[], str]]:
+    prev_dir = os.getcwd()
+    os.chdir(SCRIPT_DIR)
+    auth_vars = {}
+    if not os.path.isfile(".pass"):
+        print(
+            "Please create file .pass in script directory and"
+            "\nenter a super admin account's username & password."
+            "\n(set USER and PASS env variables)"
+        )
+        os.chdir(prev_dir)
+        return
+
+    with open(".pass", "r") as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith("#") or not line:
+                continue
+
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip()
+            if value[0] == value[-1] and (value[0] == "'" or value[0] == '"'):
+                value = value[1:-1]
+
+            auth_vars[key] = value
+
+    os.chdir(prev_dir)
+
+    if "USER" not in auth_vars or "PASS" not in auth_vars:
+        print("Please provide USER and PASS env variables in .pass file.")
+        return
+
+    def auth() -> str:
+        res = requests.post(API_URL + "/user/token-auth/", json={
+            "email": auth_vars["USER"],
+            "password": auth_vars["PASS"],
+        })
+
+        if res.status_code != 200:
+            print("Authentication failed")
+            print(res.text)
+            sys.exit(1)
+
+        return res.json()["access_token"]
+
+    return auth
+
+def get_file_arg(parser, fp: str) -> Optional[str]:
     if not os.path.isfile(fp):
         parser.error("Cannot find the file specified.")
     else:
@@ -203,6 +371,17 @@ if __name__ == "__main__":
     parser_snapshot = subparsers.add_parser("snapshot", help="Update database snapshots in Baserow")
     parser_snapshot.set_defaults(func=snapshot)
 
+    parser_export = subparsers.add_parser("export", help="Export a group or database")
+    parser_export.add_argument("type", help="What to export", choices=["group", "database"])
+    parser_export.add_argument("id", help="The ID of the thing to export", type=int)
+    parser_export.set_defaults(func=export_data)
+
+    parser_import = subparsers.add_parser("import", help="Import a group or database")
+    parser_import.add_argument("type", help="What to import", choices=["group", "database"])
+    parser_import.add_argument("file", help="The exported file to import", type=lambda x : get_file_arg(parser, x))
+    parser_import.add_argument("--group", help="The ID of the group to import into. Required when importing a database. If passed when importing a group, the groups will merge. Otherwise, a new group will be created.", type=int)
+    parser_import.set_defaults(func=import_data)
+
     args = parser.parse_args()
-    args.func(args)
+    args.func(parser, args)
 

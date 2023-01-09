@@ -1265,6 +1265,21 @@ class CoreHandler:
             self, application_id=application_id, application=application, user=user
         )
 
+    def export_single_application(self, application, files_buffer, storage=None):
+        if not storage:
+            storage = default_storage
+
+        with ZipFile(files_buffer, "a", ZIP_DEFLATED, False) as files_zip:
+            application = application.specific
+            application_type = application_type_registry.get_by_model(application)
+            with application_type.export_safe_transaction_context(application):
+                exported_application = application_type.export_serialized(
+                    application, files_zip, storage
+                )
+
+        return exported_application
+
+
     def export_group_applications(self, group, files_buffer, storage=None):
         """
         Exports the applications of a group to a list. They can later be imported via
