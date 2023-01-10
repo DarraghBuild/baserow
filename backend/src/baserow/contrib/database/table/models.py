@@ -172,7 +172,7 @@ class TableModelQuerySet(models.QuerySet):
 
         if user_field_names:
             field_object_dict = {
-                o["field"].name: o for o in self.model._field_objects.values()
+                o["field"].api_name: o for o in self.model._field_objects.values()
             }
         else:
             field_object_dict = self.model._field_objects
@@ -195,7 +195,7 @@ class TableModelQuerySet(models.QuerySet):
             field_type = field_object["type"]
             field_name = field_object["name"]
             field = field_object["field"]
-            user_field_name = field_object["field"].name
+            user_field_name = field_object["field"].api_name
             error_display_name = user_field_name if user_field_names else field_name
 
             if not field_object["type"].check_can_order_by(field_object["field"]):
