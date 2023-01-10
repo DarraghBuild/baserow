@@ -64,19 +64,19 @@ COPY --chown=$UID:$GID ./backend/docker/mime.types /etc/
 
 # Install non-dev base dependencies into a virtual env.
 COPY --chown=$UID:$GID ./backend/requirements/base.txt /baserow/requirements/
-RUN python3 -m pip install --no-cache-dir --no-warn-script-location --disable-pip-version-check --upgrade pip==22.0.3
-RUN python3 -m pip install --no-cache-dir --no-warn-script-location --upgrade virtualenv==20.13.1 && python3 -m virtualenv /baserow/venv
+RUN python3 -m pip --default-timeout=300 install --no-cache-dir --no-warn-script-location --disable-pip-version-check --upgrade pip==22.0.3
+RUN python3 -m pip --default-timeout=300 install --no-cache-dir --no-warn-script-location --upgrade virtualenv==20.13.1 && python3 -m virtualenv /baserow/venv
 
 ENV PIP_CACHE_DIR=/tmp/baserow_pip_cache
 # hadolint ignore=SC1091,DL3042
-RUN --mount=type=cache,mode=777,target=$PIP_CACHE_DIR,uid=$UID,gid=$GID . /baserow/venv/bin/activate && pip3 install  -r /baserow/requirements/base.txt
+RUN --mount=type=cache,mode=777,target=$PIP_CACHE_DIR,uid=$UID,gid=$GID . /baserow/venv/bin/activate && pip3 --default-timeout=300 install  -r /baserow/requirements/base.txt
 
 # Build a dev_deps stage which also has the dev dependencies for use by the dev layer.
 FROM base as dev_deps
 
 COPY ./backend/requirements/dev.txt /baserow/requirements/
 # hadolint ignore=SC1091,DL3042
-RUN --mount=type=cache,mode=777,target=$PIP_CACHE_DIR,uid=$UID,gid=$GID . /baserow/venv/bin/activate && pip3 install -r /baserow/requirements/dev.txt
+RUN --mount=type=cache,mode=777,target=$PIP_CACHE_DIR,uid=$UID,gid=$GID . /baserow/venv/bin/activate && pip3 --default-timeout=300 install -r /baserow/requirements/dev.txt
 
 # The core stage contains all of Baserows source code and sets up the entrypoint
 FROM base as core
