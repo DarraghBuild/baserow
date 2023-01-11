@@ -42,7 +42,7 @@
         </div>
       </div>
     </FormElement>
-    <FormElement :error="fieldHasErrors('api_name')" class="control">
+    <FormElement v-if="!creating" :error="fieldHasErrors('api_name')" class="control">
       <div class="control__elements">
         <input
           ref="api_name"
@@ -156,17 +156,28 @@ export default {
       required: false,
       default: null,
     },
+    creating: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
   },
   data() {
-    return {
-      allowedValues: ['name', 'api_name', 'type'],
+    let data = {
+      allowedValues: ['name', 'type'],
       values: {
         name: '',
-        api_name: '',
         type: this.forcedType || '',
       },
       api_name_focused: false,
     }
+
+    if (!this.creating) {
+      data.allowedValues.push('api_name')
+      data.values.api_name = ''
+    }
+
+    return data
   },
   computed: {
     fieldTypes() {
@@ -183,7 +194,7 @@ export default {
     }),
   },
   validations() {
-    return {
+    let validations = {
       values: {
         name: {
           required,
@@ -191,15 +202,20 @@ export default {
           mustHaveUniqueFieldName: this.mustHaveUniqueFieldName,
           mustNotClashWithReservedName: this.mustNotClashWithReservedName,
         },
-        api_name: {
-          required,
-          maxLength: maxLength(MAX_FIELD_NAME_LENGTH),
-          mustHaveUniqueFieldAPIName: this.mustHaveUniqueFieldAPIName,
-          mustUseValidAPINameCharacters: this.mustUseValidAPINameCharacters,
-        },
         type: { required },
       },
     }
+
+    if (!this.creating) {
+      validations.values.api_name = {
+        required,
+        maxLength: maxLength(MAX_FIELD_NAME_LENGTH),
+        mustHaveUniqueFieldAPIName: this.mustHaveUniqueFieldAPIName,
+        mustUseValidAPINameCharacters: this.mustUseValidAPINameCharacters,
+      }
+    }
+
+    return validations
   },
   methods: {
     mustHaveUniqueFieldName(param) {
