@@ -14,9 +14,21 @@ This is a fork of Baserow. Here is what has been changed/added:
 
 ### Deploying
 
-1. Copy `.env.defaults` to `.env` and fill in the required variables.
-1. Run `docker-compose up` (or `docker compose up`).
+1. Copy `.env.defaults` to `.env` and fill in the required variables (The ones that aren't commented out).
+1. Run `docker compose up`.
 1. If changes have been made to the source code, run with `--build` flag.
+
+### Local Hosting for Development
+
+1. Copy `.env.defaults` to `.env` and: 
+   1. Fill in the first three variables with some random strings. Just mash your keyboard or something.
+   1. Set `BASEROW_PUBLIC_URL` to `http://localhost`.
+   1. Comment out `BASEROW_CADDY_ADDRESSES`.
+   1. Either comment out `SUPER_ADMINS` or set it to your email.
+   1. Either comment out all the email variables or get the SMTP password and fill it in.
+1. Make sure docker is running.
+1. Run `docker compose up --build`.
+1. Go to `http://localhost` in your browser.
 
 Below is all of Baserow's README:
 
