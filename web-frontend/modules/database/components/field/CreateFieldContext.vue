@@ -4,6 +4,7 @@
       ref="form"
       :table="table"
       :forced-type="forcedType"
+      :creating="true"
       @submitted="submit"
     >
       <div class="context__form-actions">
