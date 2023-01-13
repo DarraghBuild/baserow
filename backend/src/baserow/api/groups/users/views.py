@@ -48,7 +48,10 @@ from .serializers import (
     GetGroupUsersViewParamsSerializer,
     GroupUserSerializer,
     UpdateGroupUserSerializer,
+    get_list_group_user_serializer,
 )
+
+ListGroupUsersWithMemberDataSerializer = get_list_group_user_serializer()
 
 
 class GroupUsersView(APIView, SearchableViewMixin, SortableViewMixin):
@@ -88,7 +91,7 @@ class GroupUsersView(APIView, SearchableViewMixin, SortableViewMixin):
             "must be sent first."
         ),
         responses={
-            200: GroupUserSerializer(many=True),
+            200: ListGroupUsersWithMemberDataSerializer(many=True),
             400: get_error_schema(
                 [
                     "ERROR_USER_NOT_IN_GROUP",
@@ -132,7 +135,7 @@ class GroupUsersView(APIView, SearchableViewMixin, SortableViewMixin):
         qs = self.apply_search(search, qs)
         qs = self.apply_sorts_or_default_sort(sorts, qs)
 
-        serializer = GroupUserSerializer(qs, many=True)
+        serializer = ListGroupUsersWithMemberDataSerializer(qs, many=True)
         # Iterate over any registered `member_data_registry`
         # member data types and annotate the response with it.
         for data_type in member_data_registry.get_all():
