@@ -34,8 +34,8 @@
           type="text"
           class="input"
           placeholder="api_name"
-          @focus="api_name_focused = true"
-          @blur="$v.values.api_name.$touch(); api_name_focused = false"
+          @focus="apiNameFocus()"
+          @blur="$v.values.api_name.$touch(); apiNameUnfocus()"
         />
         <div
           v-if="$v.values.api_name.$dirty && !$v.values.api_name.required"
@@ -122,6 +122,18 @@ export default {
     mustUseValidAPINameCharacters(param) {
       param = param.trim()
       return /^[a-z0-9_]+$/.test(param) && param.slice(0) !== "_" && param.slice(-1) !== "_" && !(/__/.test(param))
+    },
+    apiNameFocus() {
+      if (this.apiNameWarningInterval) {
+        clearInterval(this.apiNameWarningInterval);
+      }
+
+      this.api_name_focused = true;
+    },
+    apiNameUnfocus() {
+      this.apiNameWarningInterval = setInterval(() => {
+        this.api_name_focused = false;
+      }, 500);
     },
   },
 }

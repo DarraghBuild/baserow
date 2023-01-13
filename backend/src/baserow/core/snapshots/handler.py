@@ -429,6 +429,7 @@ class SnapshotHandler:
             None,
             default_storage,
             progress_builder=progress.create_child_builder(represents_progress=50),
+            generate_new_api_names=True,
         )
         imported_database.name = CoreHandler().find_unused_application_name(
             snapshot.snapshot_from_application.group, snapshot.name
