@@ -121,7 +121,7 @@ class TableHandler:
                 iter = base_queryset.select_related("database__group").filter(api_name=table_id, trashed=False).order_by("id").reverse().iterator()
                 table = None
                 for iter_table in iter:
-                    if TrashHandler.item_has_a_trashed_parent(iter_table):
+                    if not iter_table.database or not iter_table.database.group or TrashHandler.item_has_a_trashed_parent(iter_table):
                         continue
 
                     table = iter_table

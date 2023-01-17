@@ -216,7 +216,7 @@ class FieldHandler:
                 iter = base_queryset.select_related("table__database__group").filter(api_name=field_id, trashed=False).order_by("id").reverse().iterator()
                 field = None
                 for iter_field in iter:
-                    if TrashHandler.item_has_a_trashed_parent(iter_field.table, check_item_also=True):
+                    if not iter_field.table.database or not iter_field.table.database.group or TrashHandler.item_has_a_trashed_parent(iter_field.table, check_item_also=True):
                         continue
 
                     field = iter_field
