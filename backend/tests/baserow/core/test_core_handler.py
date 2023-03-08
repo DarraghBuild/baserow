@@ -5,16 +5,19 @@ from unittest.mock import patch
 
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
+from django.db import OperationalError, transaction
 
 import pytest
 from itsdangerous.exc import BadSignature
 
+from baserow.contrib.database.application_types import DatabaseApplicationType
 from baserow.contrib.database.models import Database
 from baserow.core.exceptions import (
     ApplicationDoesNotExist,
     ApplicationNotInGroup,
     ApplicationTypeDoesNotExist,
     BaseURLHostnameNotAllowed,
+    DuplicateApplicationMaxLocksExceededException,
     GroupDoesNotExist,
     GroupInvitationDoesNotExist,
     GroupInvitationEmailMismatch,
@@ -22,6 +25,7 @@ from baserow.core.exceptions import (
     GroupUserDoesNotExist,
     GroupUserIsLastAdmin,
     IsNotAdminError,
+    LastAdminOfGroup,
     TemplateDoesNotExist,
     TemplateFileDoesNotExist,
     UserInvalidGroupPermissionsError,
@@ -38,6 +42,7 @@ from baserow.core.models import (
     Template,
     TemplateCategory,
 )
+from baserow.core.operations import ReadGroupOperationType
 from baserow.core.trash.handler import TrashHandler
 from baserow.core.user_files.models import UserFile
 
@@ -1073,7 +1078,7 @@ def test_export_import_group_application(data_fixture):
     assert id_mapping["applications"][database.id] == imported_database.id
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 @pytest.mark.once_per_day_in_ci
 # You must add --run-once-per-day-in-ci to pytest's additional args to run this test,
 # you can do this in intellij by editing the run config for this test and adding
@@ -1089,6 +1094,24 @@ def test_sync_and_install_all_templates(data_fixture, tmpdir):
 
     group_user = data_fixture.create_user_group()
     for template in Template.objects.all():
+        with transaction.atomic():
+            handler.install_template(
+                group_user.user, group_user.group, template, storage=storage
+            )
+
+
+@pytest.mark.django_db(transaction=True)
+def test_sync_and_install_single_template(data_fixture, tmpdir):
+    storage = FileSystemStorage(location=str(tmpdir), base_url="http://localhost")
+    handler = CoreHandler()
+
+    handler.sync_templates(
+        storage=storage, template_search_glob="new-hire-onboarding.json"
+    )
+
+    group_user = data_fixture.create_user_group()
+    template = Template.objects.get()
+    with transaction.atomic():
         handler.install_template(
             group_user.user, group_user.group, template, storage=storage
         )
@@ -1248,3 +1271,55 @@ def test_restore_application(application_created_mock, data_fixture):
 
     assert restored_app.name == database.name
     assert restored_app.id == database.id
+
+
+@pytest.mark.django_db
+def test_raise_if_user_is_last_admin_of_group(data_fixture):
+    group_user = data_fixture.create_user_group()
+    user2 = data_fixture.create_user()
+
+    with pytest.raises(LastAdminOfGroup):
+        CoreHandler.raise_if_user_is_last_admin_of_group(group_user)
+
+    CoreHandler().add_user_to_group(group_user.group, user2, "ADMIN")
+
+    try:
+        CoreHandler.raise_if_user_is_last_admin_of_group(group_user)
+    except LastAdminOfGroup:
+        pytest.fail("Unexpected last admin error...")
+
+
+@pytest.mark.django_db
+def test_check_permission_for_multiple_actors(data_fixture):
+    user = data_fixture.create_user()
+    user_of_another_group = data_fixture.create_user()
+    group = data_fixture.create_group(user=user)
+
+    assert CoreHandler().check_permission_for_multiple_actors(
+        [user, user_of_another_group], ReadGroupOperationType.type, group, context=group
+    ) == [user]
+
+
+@pytest.mark.django_db
+def test_duplicate_application_export_serialized_raises_operationalerror(
+    data_fixture,
+    bypass_check_permissions,
+    application_type_serialized_raising_operationalerror,
+):
+    user = data_fixture.create_user()
+    group = data_fixture.create_group(user=user)
+    database = CoreHandler().create_application(
+        user=user, group=group, type_name=DatabaseApplicationType.type, name="Database"
+    )
+
+    with application_type_serialized_raising_operationalerror(
+        raise_transaction_exception=True
+    ):
+        with pytest.raises(DuplicateApplicationMaxLocksExceededException) as exc:
+            CoreHandler().duplicate_application(user, database)
+
+    with application_type_serialized_raising_operationalerror(
+        raise_transaction_exception=False
+    ):
+        with pytest.raises(OperationalError) as exc:
+            CoreHandler().duplicate_application(user, database)

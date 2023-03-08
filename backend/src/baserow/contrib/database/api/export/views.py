@@ -122,7 +122,9 @@ class ExportTableView(APIView):
         option_data = _validate_options(request.data)
 
         view_id = option_data.pop("view_id", None)
-        view = ViewHandler().get_view(view_id) if view_id else None
+        view = (
+            ViewHandler().get_view_as_user(request.user, view_id) if view_id else None
+        )
 
         job = ExportHandler.create_and_start_new_job(
             request.user, table, view, option_data
@@ -145,7 +147,7 @@ class ExportJobView(APIView):
         tags=["Database table export"],
         operation_id="get_export_job",
         description=(
-            "Returns information such as export progress and status or the url of the "
+            "Returns information such as export progress and state or the url of the "
             "exported file for the specified export job, only if the requesting user "
             "has access."
         ),

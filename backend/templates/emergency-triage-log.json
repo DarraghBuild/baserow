@@ -1,7 +1,7 @@
 {
     "baserow_template_version": 1,
     "name": "Emergency Triage Log",
-    "icon": "book-medical",
+    "icon": "truck-medical",
     "keywords": [
         "emergencies",
         "urgent care",
@@ -33,11 +33,18 @@
                     "fields": [
                         {
                             "id": 362118,
-                            "type": "text",
+                            "type": "formula",
                             "name": "ID",
                             "order": 0,
                             "primary": true,
-                            "text_default": "YYYY-#####"
+                            "error": null,
+                            "date_format": null,
+                            "date_include_time": null,
+                            "date_time_format": null,
+                            "number_decimal_places": null,
+                            "array_formula_type": null,
+                            "formula": "concat( \n  year(field(\"Admission time\")), \n  \"-\", \n  if( \n    row_id() < 10, \n    concat(\"0000\", row_id()), \n    if( \n      row_id() < 100, \n      concat(\"000\", row_id()), \n      if( \n        row_id() < 1000, \n        concat(\"00\", row_id()), \n        if( \n          row_id() < 10000, \n          concat(\"0\", row_id()), \n          row_id() \n        ) \n      ) \n    ) \n  ) \n)",
+                            "formula_type": "text"
                         },
                         {
                             "id": 362119,
@@ -46,7 +53,8 @@
                             "order": 1,
                             "primary": false,
                             "link_row_table_id": 61249,
-                            "link_row_related_field_id": 362134
+                            "link_row_related_field_id": 362134,
+                            "has_related_field": true
                         },
                         {
                             "id": 362120,
@@ -97,7 +105,8 @@
                             "order": 5,
                             "primary": false,
                             "link_row_table_id": 61890,
-                            "link_row_related_field_id": 362187
+                            "link_row_related_field_id": 362187,
+                            "has_related_field": true
                         },
                         {
                             "id": 362188,
@@ -106,7 +115,8 @@
                             "order": 6,
                             "primary": false,
                             "link_row_table_id": 61891,
-                            "link_row_related_field_id": 362189
+                            "link_row_related_field_id": 362189,
+                            "has_related_field": true
                         },
                         {
                             "id": 362190,
@@ -115,7 +125,8 @@
                             "order": 7,
                             "primary": false,
                             "link_row_table_id": 61888,
-                            "link_row_related_field_id": 362191
+                            "link_row_related_field_id": 362191,
+                            "has_related_field": true
                         },
                         {
                             "id": 362192,
@@ -124,7 +135,8 @@
                             "order": 8,
                             "primary": false,
                             "link_row_table_id": 61889,
-                            "link_row_related_field_id": 362193
+                            "link_row_related_field_id": 362193,
+                            "has_related_field": true
                         },
                         {
                             "id": 362194,
@@ -160,7 +172,7 @@
                             "date_time_format": null,
                             "number_decimal_places": null,
                             "array_formula_type": null,
-                            "formula": "totext(year(field(\"Admission time\"))) +\n\" week \" +\nreplace(left(\n    totext(\n        date_diff(\"day\", \n            todate(\n                concat(\n                    totext(year(field(\"Admission time\"))), \n                    \"-01-01\"), \n                \"YYYY-MM-DD\"), \n            field(\"Admission time\")\n        )/7\n    + 1)\n, 2), \".\", \"\")",
+                            "formula": "concat( \n  totext(year(field(\"Admission time\"))), \n  \" week \", \n  ceil( \n    divide( \n      date_diff( \n        \"day\", \n        todate( \n          concat( \n            totext(year(field(\"Admission time\"))), \n            \"-01-01\" \n          ), \n          \"YYYY-MM-DD\" \n        ), \n        field(\"Admission time\") \n      ), \n      7 \n    ) \n  ) \n)",
                             "formula_type": "text"
                         },
                         {
@@ -322,6 +334,7 @@
                                     "value_provider_conf": {
                                         "colors": [
                                             {
+                                                "id": "47c5e0b3-a706-42bb-af00-05589b8538da",
                                                 "color": "red",
                                                 "filters": [
                                                     {
@@ -334,6 +347,7 @@
                                                 "operator": "AND"
                                             },
                                             {
+                                                "id": "54da8d00-9999-4a7e-9d1f-e0ea4363801c",
                                                 "color": "light-red",
                                                 "filters": [
                                                     {
@@ -346,6 +360,7 @@
                                                 "operator": "AND"
                                             },
                                             {
+                                                "id": "76e03016-aa7e-4b0f-a364-42000aa1de59",
                                                 "color": "orange",
                                                 "filters": [
                                                     {
@@ -358,6 +373,7 @@
                                                 "operator": "AND"
                                             },
                                             {
+                                                "id": "fd08f970-d9b6-4043-b69b-e38c46c7c177",
                                                 "color": "light-orange",
                                                 "filters": [
                                                     {
@@ -370,6 +386,7 @@
                                                 "operator": "AND"
                                             },
                                             {
+                                                "id": "03cdae7d-6c54-4022-a6a5-8a6cc5567e53",
                                                 "color": "light-blue",
                                                 "filters": [
                                                     {
@@ -392,6 +409,7 @@
                                     "value_provider_conf": {
                                         "colors": [
                                             {
+                                                "id": "edc617e1-d879-4d02-beaa-83985fb2074e",
                                                 "color": "dark-red",
                                                 "filters": [
                                                     {
@@ -409,7 +427,7 @@
                                 }
                             ],
                             "public": false,
-                            "row_identifier_type": "id",
+                            "row_identifier_type": "count",
                             "field_options": [
                                 {
                                     "id": 449186,
@@ -417,8 +435,8 @@
                                     "width": 100,
                                     "hidden": false,
                                     "order": 11,
-                                    "aggregation_type": "unique_count",
-                                    "aggregation_raw_type": "unique_count"
+                                    "aggregation_type": "",
+                                    "aggregation_raw_type": ""
                                 },
                                 {
                                     "id": 449184,
@@ -514,7 +532,7 @@
                                     "id": 453395,
                                     "field_id": 363431,
                                     "width": 216,
-                                    "hidden": false,
+                                    "hidden": true,
                                     "order": 12,
                                     "aggregation_type": "",
                                     "aggregation_raw_type": ""
@@ -553,9 +571,12 @@
                                     "field_id": 362118,
                                     "name": "",
                                     "description": "Please enter the emergency admission ID assigned to this record. Ex. 2022-00001",
-                                    "enabled": true,
+                                    "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20738,
@@ -564,7 +585,10 @@
                                     "description": "Please assign the appropriate Emergency Severity Index for this emergency.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20739,
@@ -573,7 +597,10 @@
                                     "description": "Please enter the date and time the patient was admitted.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20740,
@@ -582,7 +609,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20741,
@@ -591,7 +621,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20742,
@@ -600,7 +633,10 @@
                                     "description": "Please select the patient this emergency is for.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20743,
@@ -609,7 +645,10 @@
                                     "description": "Please select the patient's vital signs record from below.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20744,
@@ -618,7 +657,10 @@
                                     "description": "Please select the physician(s) assigned to the patient.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20745,
@@ -627,7 +669,10 @@
                                     "description": "Please select the nurses for this emergency.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20746,
@@ -636,7 +681,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20747,
@@ -645,7 +693,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20748,
@@ -654,7 +705,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20749,
@@ -663,7 +717,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 }
                             ]
                         },
@@ -699,8 +756,8 @@
                                     "width": 100,
                                     "hidden": false,
                                     "order": 12,
-                                    "aggregation_type": "unique_count",
-                                    "aggregation_raw_type": "unique_count"
+                                    "aggregation_type": "",
+                                    "aggregation_raw_type": ""
                                 },
                                 {
                                     "id": 454885,
@@ -844,8 +901,8 @@
                                     "width": 100,
                                     "hidden": false,
                                     "order": 32767,
-                                    "aggregation_type": "unique_count",
-                                    "aggregation_raw_type": "unique_count"
+                                    "aggregation_type": "",
+                                    "aggregation_raw_type": ""
                                 },
                                 {
                                     "id": 454869,
@@ -974,6 +1031,7 @@
                             ],
                             "sortings": [],
                             "decorations": [],
+                            "public": false,
                             "single_select_field_id": 363432,
                             "field_options": [
                                 {
@@ -1063,7 +1121,7 @@
                             "order": "1.00000000000000000000",
                             "created_on": "2022-05-03T16:04:36.049985+00:00",
                             "updated_on": "2022-05-09T13:47:30.722356+00:00",
-                            "field_362118": "2022-00003",
+                            "field_362118": null,
                             "field_362119": [
                                 3
                             ],
@@ -1092,7 +1150,7 @@
                             "order": "2.00000000000000000000",
                             "created_on": "2022-05-03T16:04:36.052417+00:00",
                             "updated_on": "2022-05-09T13:47:36.055275+00:00",
-                            "field_362118": "2022-00002",
+                            "field_362118": null,
                             "field_362119": [
                                 4
                             ],
@@ -1121,7 +1179,7 @@
                             "order": "3.00000000000000000000",
                             "created_on": "2022-05-06T17:20:36.997083+00:00",
                             "updated_on": "2022-05-06T17:25:45.547440+00:00",
-                            "field_362118": "2022-00001",
+                            "field_362118": null,
                             "field_362119": [
                                 1
                             ],
@@ -1150,7 +1208,7 @@
                             "order": "4.00000000000000000000",
                             "created_on": "2022-05-06T17:26:05.822689+00:00",
                             "updated_on": "2022-05-06T17:29:13.417647+00:00",
-                            "field_362118": "2022-00004",
+                            "field_362118": null,
                             "field_362119": [
                                 5
                             ],
@@ -1179,7 +1237,7 @@
                             "order": "5.00000000000000000000",
                             "created_on": "2022-05-06T17:29:51.632213+00:00",
                             "updated_on": "2022-05-09T13:44:36.562466+00:00",
-                            "field_362118": "2022-00005",
+                            "field_362118": null,
                             "field_362119": [
                                 2
                             ],
@@ -1240,7 +1298,8 @@
                             "order": 3,
                             "primary": false,
                             "link_row_table_id": 61887,
-                            "link_row_related_field_id": 362186
+                            "link_row_related_field_id": 362186,
+                            "has_related_field": true
                         },
                         {
                             "id": 362196,
@@ -1558,7 +1617,8 @@
                             "order": 21,
                             "primary": false,
                             "link_row_table_id": 61891,
-                            "link_row_related_field_id": 362131
+                            "link_row_related_field_id": 362131,
+                            "has_related_field": true
                         }
                     ],
                     "views": [
@@ -1585,6 +1645,7 @@
                                     "value_provider_conf": {
                                         "colors": [
                                             {
+                                                "id": "a7be8ca3-21d6-471f-acba-316a9ead3891",
                                                 "color": "red",
                                                 "filters": [
                                                     {
@@ -1607,6 +1668,7 @@
                                     "value_provider_conf": {
                                         "colors": [
                                             {
+                                                "id": "ed4e565f-1779-489a-b526-c7736dd05fb4",
                                                 "color": "light-red",
                                                 "filters": [
                                                     {
@@ -1624,7 +1686,7 @@
                                 }
                             ],
                             "public": false,
-                            "row_identifier_type": "id",
+                            "row_identifier_type": "count",
                             "field_options": [
                                 {
                                     "id": 449195,
@@ -1851,7 +1913,10 @@
                                     "description": "Enter the patient's full name.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20759,
@@ -1860,7 +1925,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20760,
@@ -1869,7 +1937,10 @@
                                     "description": "Enter the patient's date of birth.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20761,
@@ -1878,7 +1949,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20762,
@@ -1887,7 +1961,10 @@
                                     "description": "Select the patient's sex at birth.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20763,
@@ -1896,7 +1973,10 @@
                                     "description": "Enter the patient's home address.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20764,
@@ -1905,7 +1985,10 @@
                                     "description": "Enter the patient's phone number.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20765,
@@ -1914,7 +1997,10 @@
                                     "description": "Enter the patient's email address.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20766,
@@ -1923,7 +2009,10 @@
                                     "description": "Select the patient's blood type.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20767,
@@ -1932,7 +2021,10 @@
                                     "description": "Please select all known patient allergies.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20768,
@@ -1941,7 +2033,10 @@
                                     "description": "Enter the patient's medical history.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20769,
@@ -1950,7 +2045,10 @@
                                     "description": "Enter the patient's social security number.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20770,
@@ -1959,7 +2057,10 @@
                                     "description": "Tick the checkbox if the patient is insured.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20771,
@@ -1968,7 +2069,10 @@
                                     "description": "Enter the name of the patient's insurance carrier.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20772,
@@ -1977,7 +2081,10 @@
                                     "description": "Enter the date that the patient was last admitted.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20773,
@@ -1986,7 +2093,10 @@
                                     "description": "Write notes or remarks about this patient.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20774,
@@ -1995,7 +2105,10 @@
                                     "description": "Enter the patient's emergency contact's name.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20775,
@@ -2004,7 +2117,10 @@
                                     "description": "Please enter the emergency contact's phone number.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20776,
@@ -2013,7 +2129,10 @@
                                     "description": "Please enter the relationship of this contact to the patient.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20777,
@@ -2022,7 +2141,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20778,
@@ -2031,7 +2153,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20779,
@@ -2040,7 +2165,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 }
                             ]
                         },
@@ -2074,6 +2202,7 @@
                                     "value_provider_conf": {
                                         "colors": [
                                             {
+                                                "id": "65e96588-f23d-4e21-8dd9-f3079bb81bf0",
                                                 "color": "red",
                                                 "filters": [
                                                     {
@@ -2323,6 +2452,7 @@
                                     "value_provider_conf": {
                                         "colors": [
                                             {
+                                                "id": "23aa6f40-8e08-447a-9cf9-a7b5bf003a20",
                                                 "color": "light-red",
                                                 "filters": [
                                                     {
@@ -2558,6 +2688,7 @@
                                 }
                             ],
                             "decorations": [],
+                            "public": false,
                             "card_cover_image_field_id": 362128,
                             "field_options": [
                                 {
@@ -2899,11 +3030,18 @@
                     "fields": [
                         {
                             "id": 362130,
-                            "type": "text",
+                            "type": "formula",
                             "name": "Date gathered",
                             "order": 0,
                             "primary": true,
-                            "text_default": "YYYY-MM-DD HH:MM ##"
+                            "error": null,
+                            "date_format": null,
+                            "date_include_time": null,
+                            "date_time_format": null,
+                            "number_decimal_places": null,
+                            "array_formula_type": null,
+                            "formula": "concat( \n  join( \n    datetime_format( \n        lookup(\"Related emergency admissions\", \"Admission time\"), \n        \"YYYYMMDD\" \n    ), \n    \"\" \n  ), \n  \"-\", \n  if( \n    row_id() < 10, \n    concat(\"0000\", row_id()), \n    if( \n      row_id() < 100, \n      concat(\"000\", row_id()), \n      if( \n        row_id() < 1000, \n        concat(\"00\", row_id()), \n        if( \n          row_id() < 10000, \n          concat(\"0\", row_id()), \n          row_id() \n        ) \n      ) \n    ) \n  ) \n)",
+                            "formula_type": "text"
                         },
                         {
                             "id": 362131,
@@ -2912,7 +3050,8 @@
                             "order": 1,
                             "primary": false,
                             "link_row_table_id": 61890,
-                            "link_row_related_field_id": 362227
+                            "link_row_related_field_id": 362227,
+                            "has_related_field": true
                         },
                         {
                             "id": 362132,
@@ -2928,7 +3067,8 @@
                             "order": 3,
                             "primary": false,
                             "link_row_table_id": 61887,
-                            "link_row_related_field_id": 362188
+                            "link_row_related_field_id": 362188,
+                            "has_related_field": true
                         },
                         {
                             "id": 362228,
@@ -3100,13 +3240,7 @@
                             "filter_type": "AND",
                             "filters_disabled": false,
                             "filters": [],
-                            "sortings": [
-                                {
-                                    "id": 15457,
-                                    "field_id": 362130,
-                                    "order": "DESC"
-                                }
-                            ],
+                            "sortings": [],
                             "decorations": [
                                 {
                                     "id": 26,
@@ -3115,6 +3249,7 @@
                                     "value_provider_conf": {
                                         "colors": [
                                             {
+                                                "id": "adc08baa-557d-44f3-9494-67a940569398",
                                                 "color": "red",
                                                 "filters": [
                                                     {
@@ -3132,23 +3267,23 @@
                                 }
                             ],
                             "public": false,
-                            "row_identifier_type": "id",
+                            "row_identifier_type": "count",
                             "field_options": [
                                 {
                                     "id": 449198,
                                     "field_id": 362130,
-                                    "width": 153,
+                                    "width": 150,
                                     "hidden": false,
-                                    "order": 15,
-                                    "aggregation_type": "unique_count",
-                                    "aggregation_raw_type": "unique_count"
+                                    "order": 16,
+                                    "aggregation_type": "",
+                                    "aggregation_raw_type": ""
                                 },
                                 {
                                     "id": 449196,
                                     "field_id": 362131,
-                                    "width": 162,
+                                    "width": 131,
                                     "hidden": false,
-                                    "order": 0,
+                                    "order": 1,
                                     "aggregation_type": "",
                                     "aggregation_raw_type": ""
                                 },
@@ -3157,7 +3292,7 @@
                                     "field_id": 362132,
                                     "width": 202,
                                     "hidden": false,
-                                    "order": 1,
+                                    "order": 2,
                                     "aggregation_type": "not_empty_percentage",
                                     "aggregation_raw_type": "empty_count"
                                 },
@@ -3166,7 +3301,7 @@
                                     "field_id": 362189,
                                     "width": 260,
                                     "hidden": true,
-                                    "order": 16,
+                                    "order": 17,
                                     "aggregation_type": "",
                                     "aggregation_raw_type": ""
                                 },
@@ -3175,7 +3310,7 @@
                                     "field_id": 362228,
                                     "width": 217,
                                     "hidden": false,
-                                    "order": 2,
+                                    "order": 3,
                                     "aggregation_type": "",
                                     "aggregation_raw_type": ""
                                 },
@@ -3184,7 +3319,7 @@
                                     "field_id": 362229,
                                     "width": 176,
                                     "hidden": false,
-                                    "order": 3,
+                                    "order": 4,
                                     "aggregation_type": "not_empty_percentage",
                                     "aggregation_raw_type": "empty_count"
                                 },
@@ -3193,7 +3328,7 @@
                                     "field_id": 362230,
                                     "width": 158,
                                     "hidden": false,
-                                    "order": 4,
+                                    "order": 5,
                                     "aggregation_type": "not_empty_percentage",
                                     "aggregation_raw_type": "empty_count"
                                 },
@@ -3202,7 +3337,7 @@
                                     "field_id": 362231,
                                     "width": 125,
                                     "hidden": false,
-                                    "order": 5,
+                                    "order": 6,
                                     "aggregation_type": "not_empty_percentage",
                                     "aggregation_raw_type": "empty_count"
                                 },
@@ -3211,7 +3346,7 @@
                                     "field_id": 362232,
                                     "width": 165,
                                     "hidden": false,
-                                    "order": 6,
+                                    "order": 7,
                                     "aggregation_type": "not_empty_percentage",
                                     "aggregation_raw_type": "empty_count"
                                 },
@@ -3220,7 +3355,7 @@
                                     "field_id": 362233,
                                     "width": 182,
                                     "hidden": false,
-                                    "order": 7,
+                                    "order": 8,
                                     "aggregation_type": "not_empty_percentage",
                                     "aggregation_raw_type": "empty_count"
                                 },
@@ -3229,7 +3364,7 @@
                                     "field_id": 362235,
                                     "width": 138,
                                     "hidden": false,
-                                    "order": 8,
+                                    "order": 9,
                                     "aggregation_type": "",
                                     "aggregation_raw_type": ""
                                 },
@@ -3238,7 +3373,7 @@
                                     "field_id": 362242,
                                     "width": 191,
                                     "hidden": false,
-                                    "order": 9,
+                                    "order": 10,
                                     "aggregation_type": "",
                                     "aggregation_raw_type": ""
                                 },
@@ -3247,7 +3382,7 @@
                                     "field_id": 362244,
                                     "width": 135,
                                     "hidden": false,
-                                    "order": 11,
+                                    "order": 12,
                                     "aggregation_type": "",
                                     "aggregation_raw_type": ""
                                 },
@@ -3256,7 +3391,7 @@
                                     "field_id": 362245,
                                     "width": 132,
                                     "hidden": false,
-                                    "order": 12,
+                                    "order": 13,
                                     "aggregation_type": "",
                                     "aggregation_raw_type": ""
                                 },
@@ -3265,7 +3400,7 @@
                                     "field_id": 362246,
                                     "width": 162,
                                     "hidden": false,
-                                    "order": 13,
+                                    "order": 14,
                                     "aggregation_type": "",
                                     "aggregation_raw_type": ""
                                 },
@@ -3274,7 +3409,7 @@
                                     "field_id": 362252,
                                     "width": 149,
                                     "hidden": false,
-                                    "order": 14,
+                                    "order": 15,
                                     "aggregation_type": "",
                                     "aggregation_raw_type": ""
                                 },
@@ -3283,7 +3418,7 @@
                                     "field_id": 363475,
                                     "width": 200,
                                     "hidden": false,
-                                    "order": 10,
+                                    "order": 11,
                                     "aggregation_type": "",
                                     "aggregation_raw_type": ""
                                 }
@@ -3312,9 +3447,12 @@
                                     "field_id": 362130,
                                     "name": "",
                                     "description": "Enter a unique identifier for this set of patient details. E.g., 2021-12-30 10:00 75",
-                                    "enabled": true,
+                                    "enabled": false,
                                     "required": true,
-                                    "order": 0
+                                    "order": 0,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20785,
@@ -3323,7 +3461,10 @@
                                     "description": "Select the patient to whom this set of data pertains.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 1
+                                    "order": 1,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20786,
@@ -3332,7 +3473,10 @@
                                     "description": "A patient's condition should be described in detail, citing symptoms and other relevant details.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 2
+                                    "order": 2,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20788,
@@ -3341,7 +3485,10 @@
                                     "description": "Assess or inquire about the patient's level of pain on a scale of 1 to 10, with 10 representing the most excruciating.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 3
+                                    "order": 3,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20789,
@@ -3350,7 +3497,10 @@
                                     "description": "Log the patient's body temperature. E.g., 98.7",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 4
+                                    "order": 4,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20790,
@@ -3359,7 +3509,10 @@
                                     "description": "Enter the patient's blood pressure reading. E.g., 120/80",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 5
+                                    "order": 5,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20791,
@@ -3368,7 +3521,10 @@
                                     "description": "Enter the patient's pulse rate. E.g., 65",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 6
+                                    "order": 6,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20792,
@@ -3377,7 +3533,10 @@
                                     "description": "Enter the patient's respiratory rate. E.g., 17",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 7
+                                    "order": 7,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20793,
@@ -3386,7 +3545,10 @@
                                     "description": "Enter the patient's blood oxygen level. E.g., 90 mm Hg",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 8
+                                    "order": 8,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20794,
@@ -3395,7 +3557,10 @@
                                     "description": "Does the patient have a smoking habit?",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 9
+                                    "order": 9,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20795,
@@ -3404,7 +3569,10 @@
                                     "description": "How often does the patient consume alcoholic beverages?",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 10
+                                    "order": 10,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20800,
@@ -3413,7 +3581,10 @@
                                     "description": "If the patient is currently taking any medications, list them here.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 11
+                                    "order": 11,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20796,
@@ -3422,7 +3593,10 @@
                                     "description": "Log the patient's current height in centimeters.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 12
+                                    "order": 12,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20797,
@@ -3431,7 +3605,10 @@
                                     "description": "Log the patient's current weight in kilograms.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 13
+                                    "order": 13,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20787,
@@ -3440,7 +3617,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 14
+                                    "order": 14,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20798,
@@ -3449,7 +3629,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 15
+                                    "order": 15,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20799,
@@ -3458,7 +3641,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 16
+                                    "order": 16,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 }
                             ]
                         }
@@ -3469,7 +3655,7 @@
                             "order": "1.00000000000000000000",
                             "created_on": "2022-05-03T16:05:50.620698+00:00",
                             "updated_on": "2022-05-20T13:29:54.350063+00:00",
-                            "field_362130": "2022-05-05 10:05 01",
+                            "field_362130": null,
                             "field_362131": [
                                 1
                             ],
@@ -3502,7 +3688,7 @@
                             "order": "2.00000000000000000000",
                             "created_on": "2022-05-03T16:05:50.622894+00:00",
                             "updated_on": "2022-05-20T13:29:45.318520+00:00",
-                            "field_362130": "2022-05-05 11:25 01",
+                            "field_362130": null,
                             "field_362131": [
                                 3
                             ],
@@ -3529,7 +3715,7 @@
                             "order": "3.00000000000000000000",
                             "created_on": "2022-05-06T17:23:21.048379+00:00",
                             "updated_on": "2022-05-20T13:30:12.715722+00:00",
-                            "field_362130": "2022-04-28 22:30 01",
+                            "field_362130": null,
                             "field_362131": [
                                 5
                             ],
@@ -3562,7 +3748,7 @@
                             "order": "4.00000000000000000000",
                             "created_on": "2022-05-06T17:28:23.662232+00:00",
                             "updated_on": "2022-05-20T13:30:04.944224+00:00",
-                            "field_362130": "2022-05-03 20:30 01",
+                            "field_362130": null,
                             "field_362131": [
                                 4
                             ],
@@ -3589,7 +3775,7 @@
                             "order": "5.00000000000000000000",
                             "created_on": "2022-05-09T10:08:18.911140+00:00",
                             "updated_on": "2022-05-20T13:29:35.586110+00:00",
-                            "field_362130": "2022-05-28 10:00 01",
+                            "field_362130": null,
                             "field_362131": [
                                 2
                             ],
@@ -3721,7 +3907,8 @@
                             "order": 3,
                             "primary": false,
                             "link_row_table_id": 61887,
-                            "link_row_related_field_id": 362190
+                            "link_row_related_field_id": 362190,
+                            "has_related_field": true
                         },
                         {
                             "id": 362325,
@@ -3784,6 +3971,7 @@
                                     "value_provider_conf": {
                                         "colors": [
                                             {
+                                                "id": "0d1f3c0a-ba7b-4472-9cc9-3481f3144cb4",
                                                 "color": "dark-green",
                                                 "filters": [
                                                     {
@@ -3806,6 +3994,7 @@
                                     "value_provider_conf": {
                                         "colors": [
                                             {
+                                                "id": "10100853-23da-415a-bbb9-ce65b0d56f89",
                                                 "color": "light-gray",
                                                 "filters": [
                                                     {
@@ -3823,7 +4012,7 @@
                                 }
                             ],
                             "public": false,
-                            "row_identifier_type": "id",
+                            "row_identifier_type": "count",
                             "field_options": [
                                 {
                                     "id": 449189,
@@ -3931,6 +4120,7 @@
                                 }
                             ],
                             "decorations": [],
+                            "public": false,
                             "card_cover_image_field_id": 362122,
                             "field_options": [
                                 {
@@ -4012,6 +4202,7 @@
                                 }
                             ],
                             "decorations": [],
+                            "public": false,
                             "card_cover_image_field_id": 362122,
                             "field_options": [
                                 {
@@ -4095,7 +4286,10 @@
                                     "description": "Enter the doctor's full name.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20802,
@@ -4104,7 +4298,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20803,
@@ -4113,7 +4310,10 @@
                                     "description": "Select the doctor's specialties.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20804,
@@ -4122,7 +4322,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20805,
@@ -4131,7 +4334,10 @@
                                     "description": "Is the doctor currently available?",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20806,
@@ -4140,7 +4346,10 @@
                                     "description": "Enter the doctor's local extension number.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20807,
@@ -4149,7 +4358,10 @@
                                     "description": "Enter the doctor's mobile number.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20808,
@@ -4158,7 +4370,10 @@
                                     "description": "Add notes or remarks regarding the doctor.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20809,
@@ -4167,7 +4382,10 @@
                                     "description": "Please tick the checkbox below if the doctor is currently active.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 }
                             ]
                         }
@@ -4452,7 +4670,8 @@
                             "order": 3,
                             "primary": false,
                             "link_row_table_id": 61887,
-                            "link_row_related_field_id": 362192
+                            "link_row_related_field_id": 362192,
+                            "has_related_field": true
                         },
                         {
                             "id": 362330,
@@ -4508,6 +4727,7 @@
                                     "value_provider_conf": {
                                         "colors": [
                                             {
+                                                "id": "ce8cca9b-1fed-40e3-a56b-348d25fce427",
                                                 "color": "dark-green",
                                                 "filters": [
                                                     {
@@ -4530,6 +4750,7 @@
                                     "value_provider_conf": {
                                         "colors": [
                                             {
+                                                "id": "26a25990-595d-4c82-a02f-940beb4c374f",
                                                 "color": "light-gray",
                                                 "filters": [
                                                     {
@@ -4547,7 +4768,7 @@
                                 }
                             ],
                             "public": false,
-                            "row_identifier_type": "id",
+                            "row_identifier_type": "count",
                             "field_options": [
                                 {
                                     "id": 449192,
@@ -4646,6 +4867,7 @@
                                 }
                             ],
                             "decorations": [],
+                            "public": false,
                             "card_cover_image_field_id": 362125,
                             "field_options": [
                                 {
@@ -4721,6 +4943,7 @@
                                 }
                             ],
                             "decorations": [],
+                            "public": false,
                             "card_cover_image_field_id": 362125,
                             "field_options": [
                                 {
@@ -4798,7 +5021,10 @@
                                     "description": "Enter the nurse's full name.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20811,
@@ -4807,7 +5033,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20812,
@@ -4816,7 +5045,10 @@
                                     "description": "Is the nurse currently available or on duty?",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20813,
@@ -4825,7 +5057,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20814,
@@ -4834,7 +5069,10 @@
                                     "description": "Enter the nurse's local extension number.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20815,
@@ -4843,7 +5081,10 @@
                                     "description": "Enter the nurse's mobile phone number.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20816,
@@ -4852,7 +5093,10 @@
                                     "description": "Add notes or remarks pertaining to the nurse.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 20817,
@@ -4861,7 +5105,10 @@
                                     "description": "Tick the checkbox if the nurse is currently active.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 }
                             ]
                         }
@@ -5200,7 +5447,8 @@
                             "order": 4,
                             "primary": false,
                             "link_row_table_id": 61887,
-                            "link_row_related_field_id": 362119
+                            "link_row_related_field_id": 362119,
+                            "has_related_field": true
                         }
                     ],
                     "views": [
@@ -5221,7 +5469,7 @@
                             ],
                             "decorations": [],
                             "public": false,
-                            "row_identifier_type": "id",
+                            "row_identifier_type": "count",
                             "field_options": [
                                 {
                                     "id": 443608,

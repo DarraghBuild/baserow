@@ -2,13 +2,17 @@ import datetime
 
 from django.conf import settings
 from django.core.files.storage import default_storage
-from django.db import IntegrityError
+from django.db import IntegrityError, OperationalError
 from django.db.models.query import QuerySet
 from django.utils import timezone
 
+from baserow.contrib.database.exceptions import (
+    DatabaseSnapshotMaxLocksExceededException,
+)
 from baserow.core.exceptions import (
     ApplicationDoesNotExist,
     ApplicationOperationNotSupported,
+    is_max_lock_exceeded_exception,
 )
 from baserow.core.handler import CoreHandler
 from baserow.core.jobs.handler import JobHandler
@@ -26,7 +30,7 @@ from baserow.core.snapshots.exceptions import (
 )
 from baserow.core.utils import Progress
 
-from .job_type import CreateSnapshotJobType, RestoreSnapshotJobType
+from .job_types import CreateSnapshotJobType, RestoreSnapshotJobType
 from .operations import (
     CreateSnapshotApplicationOperationType,
     DeleteApplicationSnapshotOperationType,
@@ -376,9 +380,18 @@ class SnapshotHandler:
         )
 
         application_type = application_type_registry.get_by_model(application)
-        exported_application = application_type.export_serialized(
-            application, None, default_storage
-        )
+        try:
+            exported_application = application_type.export_serialized(
+                application, None, default_storage
+            )
+        except OperationalError as e:
+            # Detect if this `OperationalError` is due to us exceeding the
+            # lock count in `max_locks_per_transaction`. If it is, we'll
+            # raise a different exception so that we can catch this scenario.
+            if is_max_lock_exceeded_exception(e):
+                raise DatabaseSnapshotMaxLocksExceededException()
+            raise e
+
         progress.increment(by=50)
         id_mapping = {"import_group_id": group.id}
         imported_database = application_type.import_serialized(
@@ -422,7 +435,7 @@ class SnapshotHandler:
             application, None, default_storage
         )
         progress.increment(by=50)
-        imported_database = application_type.import_serialized(
+        imported_application = application_type.import_serialized(
             snapshot.snapshot_from_application.group,
             exported_application,
             {},
@@ -431,9 +444,9 @@ class SnapshotHandler:
             progress_builder=progress.create_child_builder(represents_progress=50),
             generate_new_api_names=True,
         )
-        imported_database.name = CoreHandler().find_unused_application_name(
+        imported_application.name = CoreHandler().find_unused_application_name(
             snapshot.snapshot_from_application.group, snapshot.name
         )
-        imported_database.save()
-        application_created.send(self, application=imported_database, user=None)
-        return imported_database
+        imported_application.save()
+        application_created.send(self, application=imported_application, user=None)
+        return imported_application

@@ -68,16 +68,21 @@ export class ConditionalColorValueProviderType extends DecoratorValueProviderTyp
 
     filter.type = compatibleType.type
     const viewFilterType = registry.get('viewFilter', filter.type)
-    filter.value = viewFilterType.getDefaultValue()
+    filter.value = viewFilterType.getDefaultValue(field)
     filter.preload_values = {}
     filter.id = uuid()
 
     return filter
   }
 
-  static getDefaultColorConf(registry, { fields }, noFilter = false) {
+  static getDefaultColorConf(
+    registry,
+    { fields },
+    noFilter = false,
+    excludeColors = undefined
+  ) {
     return {
-      color: randomColor(),
+      color: randomColor(excludeColors),
       operator: 'AND',
       filters: noFilter
         ? []
@@ -86,7 +91,7 @@ export class ConditionalColorValueProviderType extends DecoratorValueProviderTyp
               fields,
             }),
           ],
-      uid: uuid(),
+      id: uuid(),
     }
   }
 

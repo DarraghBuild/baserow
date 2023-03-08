@@ -1,6 +1,7 @@
 from typing import Dict, List, Union
 
-from django.db.models import Q, QuerySet
+from django.db.models import Q, QuerySet, Value
+from django.http import QueryDict
 
 from baserow.api.exceptions import (
     InvalidSortAttributeException,
@@ -92,7 +93,7 @@ class SearchableViewMixin:
         q = Q()
 
         for search_field in self.search_fields:
-            q.add(Q(**{f"{search_field}__icontains": search}), Q.OR)
+            q.add(Q(**{f"{search_field}__icontains": Value(search)}), Q.OR)
 
         return queryset.filter(q)
 
@@ -102,6 +103,7 @@ class SortableViewMixin:
     # It's a mapping from the field name in the request to teh field name in the
     # database.
     sort_field_mapping: Dict[str, str] = {}
+    default_order_by: str = "id"
 
     def apply_sorts_or_default_sort(
         self, sorts: Union[str, None], queryset: QuerySet
@@ -121,7 +123,7 @@ class SortableViewMixin:
         """
 
         if sorts is None:
-            return queryset.order_by("id")
+            return queryset.order_by(self.default_order_by)
 
         parsed_django_order_bys = []
         already_seen_sorts = set()
@@ -151,3 +153,28 @@ class SortableViewMixin:
             parsed_django_order_bys.append(f"{direction}{attribute}")
 
         return queryset.order_by(*parsed_django_order_bys)
+
+
+class FilterableViewMixin:
+    filters_field_mapping: Dict[str, str] = {}
+
+    def apply_filters(self, query_params: QueryDict, queryset: QuerySet) -> QuerySet:
+        """
+        Applies the provided filters to the provided query. If the filters are
+        provided then an `exact` lookup will be done for each field in the
+        filters_fields property. One of the fields has to match the query.
+
+        :param query_params: The request query parameters.
+        :param queryset: The queryset where the filters query must be applied to.
+        :return: The queryset filtering the results by the filters query.
+        """
+
+        q = Q()
+
+        for key, field in self.filters_field_mapping.items():
+            if (value := query_params.get(key)) is None:
+                continue
+
+            q.add(Q(**{f"{field}": Value(value)}), Q.AND)
+
+        return queryset.filter(q)

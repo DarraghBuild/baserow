@@ -3,6 +3,16 @@ from baserow_premium.row_comments.operations import (
     ReadRowCommentsOperationType,
 )
 
+from baserow.contrib.builder.operations import (
+    ListPagesBuilderOperationType,
+    OrderPagesBuilderOperationType,
+)
+from baserow.contrib.builder.pages.operations import (
+    CreatePageOperationType,
+    DeletePageOperationType,
+    ReadPageOperationType,
+    UpdatePageOperationType,
+)
 from baserow.contrib.database.airtable.operations import (
     RunAirtableImportJobOperationType,
 )
@@ -10,9 +20,9 @@ from baserow.contrib.database.export.operations import ExportTableOperationType
 from baserow.contrib.database.fields.operations import (
     CreateFieldOperationType,
     DeleteFieldOperationType,
+    DeleteRelatedLinkRowFieldOperationType,
     DuplicateFieldOperationType,
     ListFieldsOperationType,
-    ReadAggregationDatabaseTableOperationType,
     ReadFieldOperationType,
     RestoreFieldOperationType,
     UpdateFieldOperationType,
@@ -36,7 +46,6 @@ from baserow.contrib.database.table.operations import (
     DeleteDatabaseTableOperationType,
     DuplicateDatabaseTableOperationType,
     ImportRowsDatabaseTableOperationType,
-    ListAggregationDatabaseTableOperationType,
     ListenToAllDatabaseTableEventsOperationType,
     ListRowNamesDatabaseTableOperationType,
     ListRowsDatabaseTableOperationType,
@@ -60,11 +69,13 @@ from baserow.contrib.database.views.operations import (
     DeleteViewOperationType,
     DeleteViewSortOperationType,
     DuplicateViewOperationType,
+    ListAggregationsViewOperationType,
     ListViewDecorationOperationType,
     ListViewFilterOperationType,
     ListViewsOperationType,
     ListViewSortOperationType,
     OrderViewsOperationType,
+    ReadAggregationsViewOperationType,
     ReadViewDecorationOperationType,
     ReadViewFieldOptionsOperationType,
     ReadViewFilterOperationType,
@@ -121,6 +132,15 @@ from baserow.core.trash.operations import (
     ReadApplicationTrashOperationType,
     ReadGroupTrashOperationType,
 )
+from baserow_enterprise.role.constants import (
+    ADMIN_ROLE_UID,
+    BUILDER_ROLE_UID,
+    COMMENTER_ROLE_UID,
+    EDITOR_ROLE_UID,
+    NO_ACCESS_ROLE_UID,
+    NO_ROLE_LOW_PRIORITY_ROLE_UID,
+    VIEWER_ROLE_UID,
+)
 from baserow_enterprise.role.operations import (
     AssignRoleGroupOperationType,
     ReadRoleApplicationOperationType,
@@ -144,6 +164,9 @@ from baserow_enterprise.teams.operations import (
 
 NO_ACCESS_OPS = []
 VIEWER_OPS = NO_ACCESS_OPS + [
+    ReadPageOperationType,
+    ListPagesBuilderOperationType,
+    OrderPagesBuilderOperationType,
     ReadGroupOperationType,
     ReadTeamOperationType,
     ListTeamsOperationType,
@@ -162,8 +185,8 @@ VIEWER_OPS = NO_ACCESS_OPS + [
     ListViewFilterOperationType,
     ListViewsOperationType,
     ListFieldsOperationType,
-    ListAggregationDatabaseTableOperationType,
-    ReadAggregationDatabaseTableOperationType,
+    ListAggregationsViewOperationType,
+    ReadAggregationsViewOperationType,
     ReadAdjacentRowDatabaseRowOperationType,
     ListRowNamesDatabaseTableOperationType,
     ReadViewFilterOperationType,
@@ -188,6 +211,9 @@ EDITOR_OPS = COMMENTER_OPS + [
     ReadTeamSubjectOperationType,
 ]
 BUILDER_OPS = EDITOR_OPS + [
+    CreatePageOperationType,
+    DeletePageOperationType,
+    UpdatePageOperationType,
     CreateTableDatabaseTableOperationType,
     UpdateDatabaseTableOperationType,
     DeleteDatabaseTableOperationType,
@@ -201,6 +227,7 @@ BUILDER_OPS = EDITOR_OPS + [
     DuplicateFieldOperationType,
     CreateViewDecorationOperationType,
     DeleteFieldOperationType,
+    DeleteRelatedLinkRowFieldOperationType,
     RestoreFieldOperationType,
     UpdateFieldOperationType,
     TypeFormulaOperationType,
@@ -270,14 +297,6 @@ ADMIN_OPS = BUILDER_OPS + [
     UpdateRoleApplicationOperationType,
 ]
 
-ADMIN_ROLE_UID = "ADMIN"
-BUILDER_ROLE_UID = "BUILDER"
-EDITOR_ROLE_UID = "EDITOR"
-COMMENTER_ROLE_UID = "COMMENTER"
-VIEWER_ROLE_UID = "VIEWER"
-NO_ACCESS_ROLE_UID = "NO_ACCESS"
-NO_ROLE_LOW_PRIORITY = "NO_ROLE_LOW_PRIORITY"
-
 default_roles = {
     ADMIN_ROLE_UID: ADMIN_OPS,
     BUILDER_ROLE_UID: BUILDER_OPS,
@@ -285,5 +304,5 @@ default_roles = {
     COMMENTER_ROLE_UID: COMMENTER_OPS,
     VIEWER_ROLE_UID: VIEWER_OPS,
     NO_ACCESS_ROLE_UID: NO_ACCESS_OPS,
-    NO_ROLE_LOW_PRIORITY: NO_ACCESS_OPS,
+    NO_ROLE_LOW_PRIORITY_ROLE_UID: NO_ACCESS_OPS,
 }

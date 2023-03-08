@@ -29,13 +29,13 @@ class DeleteFieldOperationType(FieldOperationType):
     type = "database.table.field.delete"
 
 
+class DeleteRelatedLinkRowFieldOperationType(DatabaseTableOperationType):
+    type = "database.table.field.delete_related_link_row_field"
+
+
 class RestoreFieldOperationType(FieldOperationType):
     type = "database.table.field.restore"
 
 
 class DuplicateFieldOperationType(FieldOperationType):
     type = "database.table.field.duplicate"
-
-
-class ReadAggregationDatabaseTableOperationType(FieldOperationType):
-    type = "database.table.field.read_aggregation"

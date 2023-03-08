@@ -1,3 +1,4 @@
+import abc
 from typing import List
 
 from django.contrib.contenttypes.models import ContentType
@@ -7,6 +8,7 @@ from django.db.models.fields import NOT_PROVIDED
 from django.db.models.fields.mixins import FieldCacheMixin
 from django.utils.functional import cached_property
 
+from baserow.core.exceptions import IdDoesNotExist
 from baserow.core.managers import NoTrashManager, TrashOnlyManager, make_trash_manager
 
 
@@ -45,11 +47,17 @@ class OrderableMixin:
         :param new_order: A list containing the object ids in the desired order. This
             list can be partial.
         :param field: The name of the order column/field.
+        :raises IdDoesNotExist: If any of the new order ids provided do not exist in
+            the queryset provided
         :return: The full ordered list of ids.
         """
 
         new_order = list(new_order)
         previous_full_id_order = list(queryset.values_list("id", flat=True))
+
+        for new_order_id in new_order:
+            if new_order_id not in previous_full_id_order:
+                raise IdDoesNotExist(new_order_id)
 
         new_full_order = []
         current = 0
@@ -245,6 +253,35 @@ class CreatedAndUpdatedOnMixin(models.Model):
 
     created_on = models.DateTimeField(auto_now_add=True, blank=True, editable=False)
     updated_on = models.DateTimeField(auto_now=True, blank=True, editable=False)
+
+    class Meta:
+        abstract = True
+
+
+class AbstractModelMeta(abc.ABCMeta, type(models.Model)):
+    pass
+
+
+class HierarchicalModelMixin(models.Model, metaclass=AbstractModelMeta):
+    """
+    This mixin introduce some helpers for working with hierarchical models.
+    """
+
+    @abc.abstractclassmethod
+    def get_parent(self):
+        """
+        :return: The parent of this model. Returns None if this is the root.
+        """
+
+    def get_root(self):
+        """
+        :return: The root of the hierarchy.
+        """
+
+        root = self
+        while r := root.get_parent():
+            root = r
+        return root
 
     class Meta:
         abstract = True

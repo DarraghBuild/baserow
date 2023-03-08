@@ -74,6 +74,10 @@ x-backend-variables: &backend-variables
   BASEROW_BACKEND_DEBUG:
   BASEROW_BACKEND_LOG_LEVEL:
   FEATURE_FLAGS:
+  BASEROW_ENABLE_OTEL:
+  BASEROW_DEPLOYMENT_ENV:
+  OTEL_EXPORTER_OTLP_ENDPOINT:
+  OTEL_RESOURCE_ATTRIBUTES:
 
   PRIVATE_BACKEND_URL: http://backend:8000
   PUBLIC_BACKEND_URL:
@@ -85,9 +89,7 @@ x-backend-variables: &backend-variables
   HOURS_UNTIL_TRASH_PERMANENTLY_DELETED:
   OLD_ACTION_CLEANUP_INTERVAL_MINUTES:
   MINUTES_UNTIL_ACTION_CLEANED_UP:
-  BASEROW_GROUP_STORAGE_USAGE_ENABLED:
   BASEROW_GROUP_STORAGE_USAGE_QUEUE:
-  BASEROW_COUNT_ROWS_ENABLED:
   DISABLE_ANONYMOUS_PUBLIC_VIEW_WS_CONNECTIONS:
   BASEROW_WAIT_INSTEAD_OF_409_CONFLICT_ERROR:
   BASEROW_FULL_HEALTHCHECKS:
@@ -109,7 +111,14 @@ x-backend-variables: &backend-variables
   BASEROW_WEBHOOKS_MAX_PER_TABLE:
   BASEROW_WEBHOOKS_MAX_CALL_LOG_ENTRIES:
   BASEROW_WEBHOOKS_REQUEST_TIMEOUT_SECONDS:
-  BASEROW_PERMISSION_MANAGERS:
+  BASEROW_ENTERPRISE_AUDIT_LOG_CLEANUP_INTERVAL_MINUTES:
+  BASEROW_ENTERPRISE_AUDIT_LOG_RETENTION_DAYS:
+  BASEROW_ROW_COUNT_JOB_CRONTAB:
+  BASEROW_STORAGE_USAGE_JOB_CRONTAB:
+  BASEROW_SEAT_USAGE_JOB_CRONTAB:
+  BASEROW_PERIODIC_FIELD_UPDATE_CRONTAB:
+  BASEROW_PERIODIC_FIELD_UPDATE_TIMEOUT_MINUTES:
+  BASEROW_PERIODIC_FIELD_UPDATE_QUEUE_NAME:
 
 services:
   # A caddy reverse proxy sitting in-front of all the services. Responsible for routing
@@ -130,11 +139,6 @@ services:
       - media:/baserow/media
       - caddy_config:/config
       - caddy_data:/data
-#    healthcheck:
-#      test: [ "CMD", "wget", "--spider", "http://localhost/caddy-health-check" ]
-#      interval: 10s
-#      timeout: 5s
-#      retries: 5
     networks:
       local:
 
@@ -174,6 +178,8 @@ services:
       BASEROW_MAX_IMPORT_FILE_SIZE_MB:
       BASEROW_MAX_SNAPSHOTS_PER_GROUP:
       SUPER_ADMINS:
+      BASEROW_ENABLE_OTEL:
+      BASEROW_DEPLOYMENT_ENV:
     depends_on:
       - backend
     networks:
@@ -187,10 +193,6 @@ services:
     environment:
       <<: *backend-variables
     command: celery-worker
-    # The backend image's baked in healthcheck defaults to the django healthcheck
-    # override it to the celery one here.
-#    healthcheck:
-#      test: [ "CMD-SHELL", "/baserow/backend/docker/docker-entrypoint.sh celery-worker-healthcheck" ]
     depends_on:
       - backend
     volumes:
@@ -206,10 +208,6 @@ services:
     command: celery-exportworker
     environment:
       <<: *backend-variables
-    # The backend image's baked in healthcheck defaults to the django healthcheck
-    # override it to the celery one here.
-#    healthcheck:
-#      test: [ "CMD-SHELL", "/baserow/backend/docker/docker-entrypoint.sh celery-exportworker-healthcheck" ]
     depends_on:
       - backend
     volumes:
@@ -227,9 +225,6 @@ services:
       <<: *backend-variables
     # See https://github.com/sibson/redbeat/issues/129#issuecomment-1057478237
     stop_signal: SIGQUIT
-    # We don't yet have a healthcheck for the beat worker, just assume it is healthy.
-#    healthcheck:
-#      test: [ "CMD-SHELL", "exit 0" ]
     depends_on:
       - backend
     volumes:
@@ -243,11 +238,6 @@ services:
       - POSTGRES_USER=${DATABASE_USER:-baserow}
       - POSTGRES_PASSWORD=${DATABASE_PASSWORD:?}
       - POSTGRES_DB=${DATABASE_NAME:-baserow}
-#    healthcheck:
-#      test: [ "CMD-SHELL", "su postgres -c \"pg_isready -U ${DATABASE_USER:-baserow}\"" ]
-#      interval: 10s
-#      timeout: 5s
-#      retries: 5
     networks:
       local:
     volumes:
@@ -256,8 +246,6 @@ services:
   redis:
     image: redis:6
     command: redis-server --requirepass ${REDIS_PASSWORD:?}
-#    healthcheck:
-#      test: [ "CMD", "redis-cli", "ping" ]
     networks:
       local:
 

@@ -1,5 +1,3 @@
-import json
-
 from django.shortcuts import reverse
 from django.test.utils import override_settings
 
@@ -125,16 +123,14 @@ def test_create_role_assignment(api_client, data_fixture, enterprise_data_fixtur
     # Can we remove a role
     response = api_client.post(
         url,
-        data=json.dumps(
-            {
-                "scope_id": table.id,
-                "scope_type": "database_table",
-                "subject_id": user2.id,
-                "subject_type": UserSubjectType.type,
-                "role": None,
-            }
-        ),
-        content_type="application/json",
+        {
+            "scope_id": table.id,
+            "scope_type": "database_table",
+            "subject_id": user2.id,
+            "subject_type": UserSubjectType.type,
+            "role": None,
+        },
+        format="json",
         **{"HTTP_AUTHORIZATION": f"JWT {token}"},
     )
     assert response.status_code == HTTP_204_NO_CONTENT
@@ -155,21 +151,20 @@ def test_create_role_assignment_invalid_requests(api_client, data_fixture):
     group = data_fixture.create_group(user=user, members=[user_2])
     group_2 = data_fixture.create_group()
     role = Role.objects.get(uid="ADMIN")
+    builder_role = Role.objects.get(uid="BUILDER")
 
     url = reverse("api:enterprise:role:list", kwargs={"group_id": group.id})
 
     response = api_client.post(
         url,
-        data=json.dumps(
-            {
-                "scope_id": 9999,
-                "scope_type": "group",
-                "subject_id": user_2.id,
-                "subject_type": UserSubjectType.type,
-                "role": role.uid,
-            }
-        ),
-        content_type="application/json",
+        {
+            "scope_id": 9999,
+            "scope_type": "group",
+            "subject_id": user_2.id,
+            "subject_type": UserSubjectType.type,
+            "role": role.uid,
+        },
+        format="json",
         **{"HTTP_AUTHORIZATION": f"JWT {token}"},
     )
 
@@ -178,16 +173,14 @@ def test_create_role_assignment_invalid_requests(api_client, data_fixture):
 
     response = api_client.post(
         url,
-        data=json.dumps(
-            {
-                "scope_id": group.id,
-                "scope_type": "nonsense",
-                "subject_id": user_2.id,
-                "subject_type": UserSubjectType.type,
-                "role": role.uid,
-            }
-        ),
-        content_type="application/json",
+        {
+            "scope_id": group.id,
+            "scope_type": "nonsense",
+            "subject_id": user_2.id,
+            "subject_type": UserSubjectType.type,
+            "role": role.uid,
+        },
+        format="json",
         **{"HTTP_AUTHORIZATION": f"JWT {token}"},
     )
 
@@ -196,16 +189,14 @@ def test_create_role_assignment_invalid_requests(api_client, data_fixture):
 
     response = api_client.post(
         url,
-        data=json.dumps(
-            {
-                "scope_id": group.id,
-                "scope_type": "group",
-                "subject_id": 99999,
-                "subject_type": UserSubjectType.type,
-                "role": role.uid,
-            }
-        ),
-        content_type="application/json",
+        {
+            "scope_id": group.id,
+            "scope_type": "group",
+            "subject_id": 99999,
+            "subject_type": UserSubjectType.type,
+            "role": role.uid,
+        },
+        format="json",
         **{"HTTP_AUTHORIZATION": f"JWT {token}"},
     )
 
@@ -214,16 +205,14 @@ def test_create_role_assignment_invalid_requests(api_client, data_fixture):
 
     response = api_client.post(
         url,
-        data=json.dumps(
-            {
-                "scope_id": group.id,
-                "scope_type": "group",
-                "subject_id": user_2.id,
-                "subject_type": "nonsense",
-                "role": role.uid,
-            }
-        ),
-        content_type="application/json",
+        {
+            "scope_id": group.id,
+            "scope_type": "group",
+            "subject_id": user_2.id,
+            "subject_type": "nonsense",
+            "role": role.uid,
+        },
+        format="json",
         **{"HTTP_AUTHORIZATION": f"JWT {token}"},
     )
 
@@ -232,16 +221,14 @@ def test_create_role_assignment_invalid_requests(api_client, data_fixture):
 
     response = api_client.post(
         url,
-        data=json.dumps(
-            {
-                "scope_id": group.id,
-                "scope_type": "group",
-                "subject_id": user_2.id,
-                "subject_type": UserSubjectType.type,
-                "role": 999999,
-            }
-        ),
-        content_type="application/json",
+        {
+            "scope_id": group.id,
+            "scope_type": "group",
+            "subject_id": user_2.id,
+            "subject_type": UserSubjectType.type,
+            "role": 999999,
+        },
+        format="json",
         **{"HTTP_AUTHORIZATION": f"JWT {token}"},
     )
 
@@ -250,39 +237,75 @@ def test_create_role_assignment_invalid_requests(api_client, data_fixture):
 
     response = api_client.post(
         reverse("api:enterprise:role:list", kwargs={"group_id": group_2.id}),
-        data=json.dumps(
-            {
-                "scope_id": group_2.id,
-                "scope_type": "group",
-                "subject_id": user_3.id,
-                "subject_type": UserSubjectType.type,
-                "role": role.uid,
-            }
-        ),
-        content_type="application/json",
+        {
+            "scope_id": group_2.id,
+            "scope_type": "group",
+            "subject_id": user_3.id,
+            "subject_type": UserSubjectType.type,
+            "role": role.uid,
+        },
+        format="json",
         **{"HTTP_AUTHORIZATION": f"JWT {token}"},
     )
 
-    assert response.status_code == HTTP_400_BAD_REQUEST
-    assert response.json()["error"] == "ERROR_USER_NOT_IN_GROUP"
+    assert response.status_code == HTTP_404_NOT_FOUND
+    assert response.json()["error"] == "ERROR_SUBJECT_DOES_NOT_EXIST"
 
     response = api_client.post(
         reverse("api:enterprise:role:list", kwargs={"group_id": 999999}),
-        data=json.dumps(
-            {
-                "scope_id": group.id,
-                "scope_type": "group",
-                "subject_id": user_2.id,
-                "subject_type": UserSubjectType.type,
-                "role": role.uid,
-            }
-        ),
-        content_type="application/json",
+        {
+            "scope_id": group.id,
+            "scope_type": "group",
+            "subject_id": user_2.id,
+            "subject_type": UserSubjectType.type,
+            "role": role.uid,
+        },
+        format="json",
         **{"HTTP_AUTHORIZATION": f"JWT {token}"},
     )
 
     assert response.status_code == HTTP_404_NOT_FOUND
     assert response.json()["error"] == "ERROR_GROUP_DOES_NOT_EXIST"
+
+    response = api_client.post(
+        url,
+        {
+            "scope_id": group.id,
+            "scope_type": "group",
+            "subject_id": user.id,
+            "subject_type": UserSubjectType.type,
+            "role": builder_role.uid,
+        },
+        format="json",
+        **{"HTTP_AUTHORIZATION": f"JWT {token}"},
+    )
+
+    assert response.status_code == HTTP_400_BAD_REQUEST
+    assert response.json()["error"] == "ERROR_LAST_ADMIN_OF_GROUP"
+
+
+@pytest.mark.django_db
+def test_assign_last_admin_the_admin_role_works(data_fixture, api_client):
+    user, token = data_fixture.create_user_and_token()
+    group = data_fixture.create_group(user=user)
+    admin_role = Role.objects.get(uid="ADMIN")
+
+    url = reverse("api:enterprise:role:list", kwargs={"group_id": group.id})
+
+    response = api_client.post(
+        url,
+        {
+            "scope_id": group.id,
+            "scope_type": "group",
+            "subject_id": user.id,
+            "subject_type": UserSubjectType.type,
+            "role": admin_role.uid,
+        },
+        format="json",
+        **{"HTTP_AUTHORIZATION": f"JWT {token}"},
+    )
+
+    assert response.status_code == HTTP_200_OK
 
 
 @pytest.mark.django_db
@@ -435,16 +458,23 @@ def test_get_role_assignments_table_level(data_fixture, api_client):
 def test_batch_assign_role(data_fixture, api_client):
     user, token = data_fixture.create_user_and_token()
     user2 = data_fixture.create_user()
-    group = data_fixture.create_group(user=user, members=[user2])
+    user3 = data_fixture.create_user()
+    group = data_fixture.create_group(user=user, members=[user2, user3])
     database = data_fixture.create_database_application(group=group)
 
     table = data_fixture.create_database_table(user=user, database=database)
 
     builder_role = Role.objects.get(uid="BUILDER")
+    viewer_role = Role.objects.get(uid="VIEWER")
 
     assert len(RoleAssignment.objects.all()) == 0
 
     url = reverse("api:enterprise:role:batch", kwargs={"group_id": group.id})
+
+    RoleAssignmentHandler().assign_role(
+        user3, group, viewer_role, scope=database.application_ptr
+    )
+    RoleAssignmentHandler().assign_role(user3, group, viewer_role, scope=table)
 
     # Can add a first roleAssignment
     response = api_client.post(
@@ -457,6 +487,20 @@ def test_batch_assign_role(data_fixture, api_client):
                     "subject_id": user2.id,
                     "subject_type": UserSubjectType.type,
                     "role": builder_role.uid,
+                },
+                {
+                    "scope_id": table.id,
+                    "scope_type": "database_table",
+                    "subject_id": user3.id,
+                    "subject_type": UserSubjectType.type,
+                    "role": None,
+                },
+                {
+                    "scope_id": database.application_ptr.id,
+                    "scope_type": "application",
+                    "subject_id": user3.id,
+                    "subject_type": UserSubjectType.type,
+                    "role": None,
                 },
             ]
         },
@@ -490,7 +534,9 @@ def test_batch_assign_role(data_fixture, api_client):
                 "id": user2.id,
                 "username": user2.username,
             },
-        }
+        },
+        None,
+        None,
     ]
 
 

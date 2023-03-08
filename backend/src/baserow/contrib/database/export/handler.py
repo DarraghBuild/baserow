@@ -1,4 +1,3 @@
-import logging
 import uuid
 from io import BytesIO
 from os.path import join
@@ -10,12 +9,14 @@ from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils import timezone
 
+from loguru import logger
+
 from baserow.contrib.database.export.models import (
     EXPORT_JOB_CANCELLED_STATUS,
-    EXPORT_JOB_COMPLETED_STATUS,
     EXPORT_JOB_EXPIRED_STATUS,
     EXPORT_JOB_EXPORTING_STATUS,
     EXPORT_JOB_FAILED_STATUS,
+    EXPORT_JOB_FINISHED_STATUS,
     EXPORT_JOB_PENDING_STATUS,
     ExportJob,
 )
@@ -34,8 +35,6 @@ from .exceptions import (
 )
 from .file_writer import PaginatedExportJobFileWriter
 from .registries import TableExporter, table_exporter_registry
-
-logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
@@ -110,7 +109,7 @@ class ExportHandler:
             table=table,
             view=view,
             exporter_type=exporter_type,
-            status=EXPORT_JOB_PENDING_STATUS,
+            state=EXPORT_JOB_PENDING_STATUS,
             export_options=export_options,
         )
         return job
@@ -180,7 +179,7 @@ class ExportHandler:
                 )
                 job.exported_file_name = None
 
-            job.status = EXPORT_JOB_EXPIRED_STATUS
+            job.state = EXPORT_JOB_EXPIRED_STATUS
             job.save()
 
 
@@ -208,7 +207,7 @@ def _raise_if_invalid_view_or_table_for_exporter(
 
 def _cancel_unfinished_jobs(user):
     """
-    Will cancel any in progress jobs by setting their status to cancelled. Any
+    Will cancel any in progress jobs by setting their state to cancelled. Any
     tasks currently running these jobs are expected to periodically check if they
     have been cancelled and stop accordingly.
 
@@ -217,7 +216,7 @@ def _cancel_unfinished_jobs(user):
     """
 
     jobs = ExportJob.unfinished_jobs(user=user)
-    return jobs.update(status=EXPORT_JOB_CANCELLED_STATUS)
+    return jobs.update(state=EXPORT_JOB_CANCELLED_STATUS)
 
 
 def _mark_job_as_finished(export_job: ExportJob) -> ExportJob:
@@ -228,8 +227,8 @@ def _mark_job_as_finished(export_job: ExportJob) -> ExportJob:
     :return: The updated finished job.
     """
 
-    export_job.status = EXPORT_JOB_COMPLETED_STATUS
-    export_job.progress_percentage = 1.0
+    export_job.state = EXPORT_JOB_FINISHED_STATUS
+    export_job.progress_percentage = 100.0
     export_job.save()
     return export_job
 
@@ -243,11 +242,26 @@ def _mark_job_as_failed(job, e):
     :return: The updated failed job.
     """
 
-    job.status = EXPORT_JOB_FAILED_STATUS
+    job.state = EXPORT_JOB_FAILED_STATUS
     job.progress_percentage = 0.0
     job.error = str(e)
     job.save()
     return job
+
+
+def _register_action(job):
+    """
+    Temporary solution to register the action. Refactor this to use the jobs
+    system.
+    """
+
+    from baserow.core.action.registries import action_type_registry
+
+    from .actions import ExportTableActionType
+
+    action_type_registry.get(ExportTableActionType.type).do(
+        job.user, job.table, export_type=job.exporter_type, view=job.view
+    )
 
 
 def _open_file_and_run_export(job: ExportJob) -> ExportJob:
@@ -266,8 +280,11 @@ def _open_file_and_run_export(job: ExportJob) -> ExportJob:
     # Store the file name before we even start exporting so if the export fails
     # and the file has been made we know where it is to clean it up correctly.
     job.exported_file_name = exported_file_name
-    job.status = EXPORT_JOB_EXPORTING_STATUS
+    job.state = EXPORT_JOB_EXPORTING_STATUS
     job.save()
+
+    # TODO: refactor to use the jobs systems
+    _register_action(job)
 
     with _create_storage_dir_if_missing_and_open(storage_location) as file:
         queryset_serializer_class = exporter.queryset_serializer_class

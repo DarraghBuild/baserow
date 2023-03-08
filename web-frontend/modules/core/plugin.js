@@ -23,6 +23,7 @@ import {
   CorePermissionManagerType,
   StaffPermissionManagerType,
   GroupMemberPermissionManagerType,
+  StaffOnlySettingOperationPermissionManagerType,
 } from '@baserow/modules/core/permissionManagerTypes'
 
 import {
@@ -47,6 +48,7 @@ import de from '@baserow/modules/core/locales/de.json'
 import es from '@baserow/modules/core/locales/es.json'
 import it from '@baserow/modules/core/locales/it.json'
 import pl from '@baserow/modules/core/locales/pl.json'
+import { DefaultErrorPageType } from '@baserow/modules/core/errorPageTypes'
 
 export default (context, inject) => {
   const { store, isDev, app } = context
@@ -91,6 +93,10 @@ export default (context, inject) => {
     'permissionManager',
     new BasicPermissionManagerType(context)
   )
+  registry.register(
+    'permissionManager',
+    new StaffOnlySettingOperationPermissionManagerType(context)
+  )
   registry.register('userFileUpload', new UploadFileUserFileUploadType(context))
   registry.register(
     'userFileUpload',
@@ -121,4 +127,6 @@ export default (context, inject) => {
     'groupSettingsPage',
     new InvitesGroupSettingsPageType(context)
   )
+
+  registry.register('errorPage', new DefaultErrorPageType(context))
 }

@@ -8,11 +8,12 @@ from django.contrib.auth.models import AbstractUser, update_last_login
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Q, QuerySet
 from django.utils import timezone, translation
 from django.utils.translation import gettext as _
 
 from itsdangerous import URLSafeTimedSerializer
+from opentelemetry import trace
 
 from baserow.core.auth_provider.handler import PasswordProviderHandler
 from baserow.core.auth_provider.models import AuthProviderModel
@@ -32,6 +33,7 @@ from baserow.core.signals import (
 )
 from baserow.core.trash.handler import TrashHandler
 
+from ..telemetry.utils import baserow_trace_methods
 from .emails import (
     AccountDeleted,
     AccountDeletionCanceled,
@@ -52,8 +54,10 @@ from .utils import normalize_email_address
 
 User = get_user_model()
 
+tracer = trace.get_tracer(__name__)
 
-class UserHandler:
+
+class UserHandler(metaclass=baserow_trace_methods(tracer)):
     def get_active_user(
         self,
         user_id: Optional[int] = None,
@@ -117,7 +121,7 @@ class UserHandler:
             accepted and initial group will not be created.
         :param template: If provided, that template will be installed into the newly
             created group.
-        :param authentication_provider: If provided, a reference to the authentication
+        :param auth_provider: If provided, a reference to the authentication
             provider will be stored in order to be able to provide different options
             for the user to login.
         :raises: UserAlreadyExist: When a user with the provided username (email)
@@ -192,13 +196,18 @@ class UserHandler:
         language = language or settings.LANGUAGE_CODE
         UserProfile.objects.create(user=user, language=language)
 
+        # If we have an invitation to a group, then accept it.
+        group_user = None
         if group_invitation_token:
             group_user = core_handler.accept_group_invitation(user, group_invitation)
 
         if group_user:
+            # If we've created a `GroupUser` at some point, pluck out the `Group`.
+            group = getattr(group_user, "group", None)
+
             # Call the user_created method for each plugin that is in the registry.
             for plugin in plugin_registry.registry.values():
-                plugin.user_created(user, group_user.group, group_invitation, template)
+                plugin.user_created(user, group, group_invitation, template)
 
         # register the authentication provider used to create the user
         if auth_provider is None:
@@ -430,7 +439,9 @@ class UserHandler:
 
         user_restored.send(self, performed_by=user, user=user)
 
-    def delete_expired_users(self, grace_delay: Optional[timedelta] = None):
+    def delete_expired_users_and_related_groups_if_last_admin(
+        self, grace_delay: Optional[timedelta] = None
+    ):
         """
         Executes all previously scheduled user account deletions for which
         the `last_login` date is earlier than the defined grace delay. If the users
@@ -473,15 +484,7 @@ class UserHandler:
                 "groupuser",
                 filter=(
                     Q(groupuser__permissions="ADMIN")
-                    & ~Q(
-                        groupuser__user__in=User.objects.filter(
-                            (
-                                Q(profile__to_be_deleted=True)
-                                & Q(last_login__lt=limit_date)
-                            )
-                            | Q(is_active=False)
-                        )
-                    )
+                    & ~Q(groupuser__user__in=users_to_delete)
                 ),
             ),
         ).filter(template=None, admin_count_after=0)
@@ -498,3 +501,15 @@ class UserHandler:
                 email = AccountDeleted(username, to=[email])
                 email.send()
             user_permanently_deleted.send(self, user_id=id, group_ids=group_ids)
+
+    def get_all_active_users_qs(self) -> QuerySet:
+        """
+        Returns a queryset of all users which are considered active and usable in a
+        Baserow instance. Will filter out users who have be "banned/deactivated" by an
+        admin or users who have scheduled their account for a deletion.
+        """
+
+        return User.objects.filter(
+            profile__to_be_deleted=False,
+            is_active=True,
+        )
