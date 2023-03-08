@@ -92,28 +92,30 @@ def call_webhook(
         )
         handler.clean_webhook_calls(webhook)
 
-        if success and webhook.failed_triggers != 0:
-            # If the call was successful and failed triggers had been increased in
-            # the past, we can safely reset it to 0 again to prevent deactivation of
-            # the webhook.
-            webhook.failed_triggers = 0
-            webhook.save()
-        elif not success and (
-            webhook.failed_triggers
-            < settings.BASEROW_WEBHOOKS_MAX_CONSECUTIVE_TRIGGER_FAILURES
-        ):
-            # If the task has reached the maximum amount of failed calls, we're going to
-            # give up and increase the total failed triggers of the webhook if we're
-            # still operating within the limits of the max consecutive trigger failures.
-            webhook.failed_triggers += 1
-            webhook.save()
-        elif not success:
-            # If webhook has reached the maximum amount of failed triggers,
-            # we're going to deactivate it because we can reasonable assume that the
-            # target doesn't listen anymore. At this point we've tried 8 * 10 times.
-            # The user can manually activate it again when it's fixed.
-            webhook.active = False
-            webhook.save()
+        # Disable disabling webhooks
+
+        #if success and webhook.failed_triggers != 0:
+        #    # If the call was successful and failed triggers had been increased in
+        #    # the past, we can safely reset it to 0 again to prevent deactivation of
+        #    # the webhook.
+        #    webhook.failed_triggers = 0
+        #    webhook.save()
+        #elif not success and (
+        #    webhook.failed_triggers
+        #    < settings.BASEROW_WEBHOOKS_MAX_CONSECUTIVE_TRIGGER_FAILURES
+        #):
+        #    # If the task has reached the maximum amount of failed calls, we're going to
+        #    # give up and increase the total failed triggers of the webhook if we're
+        #    # still operating within the limits of the max consecutive trigger failures.
+        #    webhook.failed_triggers += 1
+        #    webhook.save()
+        #elif not success:
+        #    # If webhook has reached the maximum amount of failed triggers,
+        #    # we're going to deactivate it because we can reasonable assume that the
+        #    # target doesn't listen anymore. At this point we've tried 8 * 10 times.
+        #    # The user can manually activate it again when it's fixed.
+        #    webhook.active = False
+        #    webhook.save()
 
     # This part must be outside of the transaction block, otherwise it could cause
     # the transaction to rollback when the retry exception is raised, and we don't want
