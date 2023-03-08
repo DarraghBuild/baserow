@@ -1,7 +1,7 @@
 {
     "baserow_template_version": 1,
     "name": "Team Check-ins",
-    "icon": "chalkboard-teacher",
+    "icon": "check-to-slot",
     "keywords": [
         "team check-ins",
         "daily",
@@ -34,11 +34,18 @@
                     "fields": [
                         {
                             "id": 314158,
-                            "type": "text",
+                            "type": "formula",
                             "name": "ID",
                             "order": 0,
                             "primary": true,
-                            "text_default": "Full Name YYYY-MM-DD/01"
+                            "error": null,
+                            "date_format": null,
+                            "date_include_time": null,
+                            "date_time_format": null,
+                            "number_decimal_places": null,
+                            "array_formula_type": null,
+                            "formula": "concat( \n  left(join(field(\"Created by\"),\"\"), 1), \n  regex_replace( \n    totext( \n      field(\"Date and time reported\") \n    ), \n    \"(-|:|\\s|\\t)\", \n    \"\" \n  ), \n  row_id() \n)",
+                            "formula_type": "text"
                         },
                         {
                             "id": 314160,
@@ -63,7 +70,7 @@
                             "date_time_format": null,
                             "number_decimal_places": null,
                             "array_formula_type": null,
-                            "formula": "concat(\n    \"\ud83c\udf31 Week \", \n    replace(\n        left(\n            totext(field(\"Week number in the year\")), \n            2\n        ), \n        \".\", \n        \"\"\n    ),\n    \" of \", \n    totext(year(field(\"Date and time reported\"))) \n)",
+                            "formula": "concat( \n  \"\ud83c\udf31 Week \", \n  field(\"Week number in the year\"), \n  \" of \", \n  totext(year(field(\"Date and time reported\"))) \n)",
                             "formula_type": "text"
                         },
                         {
@@ -73,7 +80,8 @@
                             "order": 4,
                             "primary": false,
                             "link_row_table_id": 54605,
-                            "link_row_related_field_id": 314166
+                            "link_row_related_field_id": 314166,
+                            "has_related_field": true
                         },
                         {
                             "id": 314163,
@@ -138,7 +146,8 @@
                             "order": 7,
                             "primary": false,
                             "link_row_table_id": 54603,
-                            "link_row_related_field_id": 314167
+                            "link_row_related_field_id": 314167,
+                            "has_related_field": true
                         },
                         {
                             "id": 314396,
@@ -152,7 +161,7 @@
                             "date_time_format": null,
                             "number_decimal_places": 0,
                             "array_formula_type": null,
-                            "formula": "tonumber(\n    replace(left(totext(\n        date_diff(\"day\", \n            todate(\n                concat(\n                    totext(year(field(\"Date and time reported\"))), \n                    \"-01-01\"), \n                \"YYYY-MM-DD\"), \n            field(\"Date and time reported\")\n        )/7\n    ), 2), \".\", \"\")\n) + 1",
+                            "formula": "ceil( \n  divide( \n    date_diff( \n      \"day\", \n      todate( \n        concat( \n          totext(year(field(\"Date and time reported\"))), \n          \"-01-01\" \n        ), \n        \"YYYY-MM-DD\" \n      ), \n      field(\"Date and time reported\") \n    ), \n    7 \n  ) \n)",
                             "formula_type": "number"
                         },
                         {
@@ -267,44 +276,39 @@
                             "filters": [],
                             "sortings": [
                                 {
-                                    "id": 12839,
-                                    "field_id": 314161,
+                                    "id": 69893,
+                                    "field_id": 314160,
                                     "order": "DESC"
-                                },
-                                {
-                                    "id": 13483,
-                                    "field_id": 314158,
-                                    "order": "ASC"
                                 }
                             ],
                             "decorations": [],
                             "public": false,
-                            "row_identifier_type": "id",
+                            "row_identifier_type": "count",
                             "field_options": [
                                 {
                                     "id": 384394,
                                     "field_id": 314158,
-                                    "width": 234,
+                                    "width": 139,
                                     "hidden": false,
-                                    "order": 11,
-                                    "aggregation_type": "",
-                                    "aggregation_raw_type": ""
+                                    "order": 12,
+                                    "aggregation_type": "unique_count",
+                                    "aggregation_raw_type": "unique_count"
                                 },
                                 {
                                     "id": 384396,
                                     "field_id": 314160,
                                     "width": 207,
                                     "hidden": false,
-                                    "order": 0,
+                                    "order": 1,
                                     "aggregation_type": "",
                                     "aggregation_raw_type": ""
                                 },
                                 {
                                     "id": 384397,
                                     "field_id": 314161,
-                                    "width": 166,
+                                    "width": 153,
                                     "hidden": false,
-                                    "order": 1,
+                                    "order": 2,
                                     "aggregation_type": "",
                                     "aggregation_raw_type": ""
                                 },
@@ -313,7 +317,7 @@
                                     "field_id": 314162,
                                     "width": 157,
                                     "hidden": false,
-                                    "order": 2,
+                                    "order": 3,
                                     "aggregation_type": "",
                                     "aggregation_raw_type": ""
                                 },
@@ -322,7 +326,7 @@
                                     "field_id": 314163,
                                     "width": 166,
                                     "hidden": false,
-                                    "order": 3,
+                                    "order": 4,
                                     "aggregation_type": "",
                                     "aggregation_raw_type": ""
                                 },
@@ -331,7 +335,7 @@
                                     "field_id": 314164,
                                     "width": 146,
                                     "hidden": false,
-                                    "order": 4,
+                                    "order": 5,
                                     "aggregation_type": "",
                                     "aggregation_raw_type": ""
                                 },
@@ -340,16 +344,16 @@
                                     "field_id": 314165,
                                     "width": 164,
                                     "hidden": false,
-                                    "order": 5,
+                                    "order": 6,
                                     "aggregation_type": "",
                                     "aggregation_raw_type": ""
                                 },
                                 {
                                     "id": 384688,
                                     "field_id": 314396,
-                                    "width": 225,
+                                    "width": 214,
                                     "hidden": true,
-                                    "order": 10,
+                                    "order": 11,
                                     "aggregation_type": "",
                                     "aggregation_raw_type": ""
                                 },
@@ -358,7 +362,7 @@
                                     "field_id": 314730,
                                     "width": 183,
                                     "hidden": false,
-                                    "order": 6,
+                                    "order": 7,
                                     "aggregation_type": "",
                                     "aggregation_raw_type": ""
                                 },
@@ -367,7 +371,7 @@
                                     "field_id": 314731,
                                     "width": 297,
                                     "hidden": false,
-                                    "order": 7,
+                                    "order": 8,
                                     "aggregation_type": "",
                                     "aggregation_raw_type": ""
                                 },
@@ -376,7 +380,7 @@
                                     "field_id": 314732,
                                     "width": 274,
                                     "hidden": false,
-                                    "order": 8,
+                                    "order": 9,
                                     "aggregation_type": "",
                                     "aggregation_raw_type": ""
                                 },
@@ -385,7 +389,7 @@
                                     "field_id": 314733,
                                     "width": 149,
                                     "hidden": false,
-                                    "order": 9,
+                                    "order": 10,
                                     "aggregation_type": "",
                                     "aggregation_raw_type": ""
                                 }
@@ -417,9 +421,12 @@
                                     "field_id": 314158,
                                     "name": "Check-in identifier",
                                     "description": "Please provide a unique check-in identifier in this format: <Your Name> YYYY-MM-DD/##",
-                                    "enabled": true,
+                                    "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 16204,
@@ -428,7 +435,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 16205,
@@ -437,7 +447,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 16206,
@@ -446,7 +459,10 @@
                                     "description": "Please select your own name in the selection below.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 16207,
@@ -455,7 +471,10 @@
                                     "description": "How do you feel about this task? Please select the current mood you have for this task.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 16208,
@@ -464,7 +483,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 16209,
@@ -473,7 +495,10 @@
                                     "description": "Please select the specific task of a specific project you worked on for this check-in.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 16210,
@@ -482,7 +507,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 16211,
@@ -491,7 +519,10 @@
                                     "description": "Select the current percent of completion for work done for this task.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 16212,
@@ -500,7 +531,10 @@
                                     "description": "Please state a brief summary of the work done for this task.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 16213,
@@ -509,7 +543,10 @@
                                     "description": "Please raise any unresolved issue and other prerequisites related to completing this task.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 16214,
@@ -518,7 +555,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 }
                             ]
                         },
@@ -539,6 +579,7 @@
                             ],
                             "sortings": [],
                             "decorations": [],
+                            "public": false,
                             "single_select_field_id": 314163,
                             "field_options": [
                                 {
@@ -632,6 +673,7 @@
                             ],
                             "sortings": [],
                             "decorations": [],
+                            "public": false,
                             "single_select_field_id": 314163,
                             "field_options": [
                                 {
@@ -715,7 +757,7 @@
                             "order": "1.00000000000000000000",
                             "created_on": "2022-03-23T10:33:49.848356+00:00",
                             "updated_on": "2022-04-20T06:31:17.950509+00:00",
-                            "field_314158": "Brandon Wayne 2022-03-23/01",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -737,7 +779,7 @@
                             "order": "2.00000000000000000000",
                             "created_on": "2022-03-23T10:33:49.848448+00:00",
                             "updated_on": "2022-04-20T06:31:26.187752+00:00",
-                            "field_314158": "Talia Algord 2022-03-23/01",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -759,7 +801,7 @@
                             "order": "3.00000000000000000000",
                             "created_on": "2022-03-23T10:33:49.848522+00:00",
                             "updated_on": "2022-04-01T09:59:26.645503+00:00",
-                            "field_314158": "Daniel Wayne 2022-03-23/01",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -781,7 +823,7 @@
                             "order": "4.00000000000000000000",
                             "created_on": "2022-03-31T03:18:36.747917+00:00",
                             "updated_on": "2022-04-01T10:00:47.925714+00:00",
-                            "field_314158": "Talia Algord 2022-03-31/01",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -803,7 +845,7 @@
                             "order": "5.00000000000000000000",
                             "created_on": "2022-03-31T03:19:50.085311+00:00",
                             "updated_on": "2022-04-20T06:31:10.540136+00:00",
-                            "field_314158": "Brandon Wayne 2022-03-31/01",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -825,7 +867,7 @@
                             "order": "6.00000000000000000000",
                             "created_on": "2022-03-31T03:21:27.889857+00:00",
                             "updated_on": "2022-04-14T16:01:03.753425+00:00",
-                            "field_314158": "Daniel Wayne 2022-03-31/01",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -847,7 +889,7 @@
                             "order": "7.00000000000000000000",
                             "created_on": "2022-03-31T03:27:32.376193+00:00",
                             "updated_on": "2022-04-14T16:01:49.619615+00:00",
-                            "field_314158": "Daniel Wayne 2022-03-31/02",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -869,7 +911,7 @@
                             "order": "8.00000000000000000000",
                             "created_on": "2022-03-31T03:29:09.038268+00:00",
                             "updated_on": "2022-04-01T10:05:02.514318+00:00",
-                            "field_314158": "Talia Algord 2022-03-31/02",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -891,7 +933,7 @@
                             "order": "9.00000000000000000000",
                             "created_on": "2022-03-31T10:00:47.016365+00:00",
                             "updated_on": "2022-04-20T06:31:11.059109+00:00",
-                            "field_314158": "Brandon Wayne 2022-03-31/02",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -913,7 +955,7 @@
                             "order": "10.00000000000000000000",
                             "created_on": "2022-03-31T10:01:56.610823+00:00",
                             "updated_on": "2022-04-01T10:06:30.221714+00:00",
-                            "field_314158": "Brandon Wayne 2022-03-31/03",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -935,7 +977,7 @@
                             "order": "11.00000000000000000000",
                             "created_on": "2022-03-31T10:02:41.071189+00:00",
                             "updated_on": "2022-04-01T10:07:23.249235+00:00",
-                            "field_314158": "Brandon Wayne 2022-03-31/04",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -957,7 +999,7 @@
                             "order": "12.00000000000000000000",
                             "created_on": "2022-03-31T10:05:06.866074+00:00",
                             "updated_on": "2022-04-01T10:09:27.477769+00:00",
-                            "field_314158": "Talia Algord 2022-03-31/03",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -979,7 +1021,7 @@
                             "order": "13.00000000000000000000",
                             "created_on": "2022-03-31T10:08:11.728192+00:00",
                             "updated_on": "2022-04-20T06:31:13.768043+00:00",
-                            "field_314158": "Gordon Brickhouse 2022-03-31/01",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -1001,7 +1043,7 @@
                             "order": "14.00000000000000000000",
                             "created_on": "2022-03-31T10:10:06.294748+00:00",
                             "updated_on": "2022-04-01T10:10:50.581588+00:00",
-                            "field_314158": "Donn Moore 2022-03-31/01",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -1023,7 +1065,7 @@
                             "order": "15.00000000000000000000",
                             "created_on": "2022-03-31T10:10:32.419775+00:00",
                             "updated_on": "2022-04-01T10:11:42.153070+00:00",
-                            "field_314158": "Kimberly Wagner 2022-03-31/01",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -1045,7 +1087,7 @@
                             "order": "16.00000000000000000000",
                             "created_on": "2022-03-31T10:12:03.406777+00:00",
                             "updated_on": "2022-04-20T06:31:14.738108+00:00",
-                            "field_314158": "Kimberly Wagner 2022-03-31/02",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -1067,7 +1109,7 @@
                             "order": "17.00000000000000000000",
                             "created_on": "2022-04-01T09:36:51.873090+00:00",
                             "updated_on": "2022-04-01T10:12:51.259605+00:00",
-                            "field_314158": "Steve Gray 2022-04-01/01",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -1089,7 +1131,7 @@
                             "order": "18.00000000000000000000",
                             "created_on": "2022-04-01T09:37:30.521725+00:00",
                             "updated_on": "2022-04-01T10:13:31.863749+00:00",
-                            "field_314158": "Janet Cook 2022-04-01/01",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -1111,7 +1153,7 @@
                             "order": "19.00000000000000000000",
                             "created_on": "2022-04-01T09:47:22.631620+00:00",
                             "updated_on": "2022-04-14T16:04:19.659884+00:00",
-                            "field_314158": "Steve Gray 2022-04-01/02",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -1133,7 +1175,7 @@
                             "order": "20.00000000000000000000",
                             "created_on": "2022-04-01T09:48:29.388357+00:00",
                             "updated_on": "2022-04-01T10:16:25.509530+00:00",
-                            "field_314158": "Janet Cook 2022-04-01/02",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -1155,7 +1197,7 @@
                             "order": "21.00000000000000000000",
                             "created_on": "2022-04-01T09:49:23.386770+00:00",
                             "updated_on": "2022-04-01T10:17:37.154170+00:00",
-                            "field_314158": "Steve Gray 2022-04-01/03",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -1177,7 +1219,7 @@
                             "order": "22.00000000000000000000",
                             "created_on": "2022-04-01T09:53:26.963917+00:00",
                             "updated_on": "2022-04-01T09:54:51.555352+00:00",
-                            "field_314158": "Susan Glaze 2022-04-01/01",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -1199,7 +1241,7 @@
                             "order": "23.00000000000000000000",
                             "created_on": "2022-04-01T09:55:29.209522+00:00",
                             "updated_on": "2022-04-20T06:31:12.436349+00:00",
-                            "field_314158": "Daniel Wayne 2022-04-01/01",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -1221,7 +1263,7 @@
                             "order": "24.00000000000000000000",
                             "created_on": "2022-04-01T10:22:21.396502+00:00",
                             "updated_on": "2022-04-09T21:46:22.328486+00:00",
-                            "field_314158": "Brandon Wayne 2022-04-01/01",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -1243,7 +1285,7 @@
                             "order": "25.00000000000000000000",
                             "created_on": "2022-04-01T10:24:35.194291+00:00",
                             "updated_on": "2022-04-01T10:26:45.150489+00:00",
-                            "field_314158": "Susan Glaze 2022-04-01/02",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -1265,7 +1307,7 @@
                             "order": "26.00000000000000000000",
                             "created_on": "2022-04-05T12:59:41.440233+00:00",
                             "updated_on": "2022-04-14T16:03:15.583594+00:00",
-                            "field_314158": "Brandon Wayne 2022-04-05/01",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -1287,7 +1329,7 @@
                             "order": "27.00000000000000000000",
                             "created_on": "2022-04-05T13:03:23.691780+00:00",
                             "updated_on": "2022-04-05T13:04:41.085768+00:00",
-                            "field_314158": "Susan Glaze YYYY-MM-DD/01",
+                            "field_314158": null,
                             "field_314160": null,
                             "field_314161": null,
                             "field_314162": [
@@ -1359,7 +1401,8 @@
                             "order": 10,
                             "primary": false,
                             "link_row_table_id": 54605,
-                            "link_row_related_field_id": 316706
+                            "link_row_related_field_id": 316706,
+                            "has_related_field": true
                         },
                         {
                             "id": 316764,
@@ -1368,7 +1411,8 @@
                             "order": 11,
                             "primary": false,
                             "link_row_table_id": 54605,
-                            "link_row_related_field_id": 316765
+                            "link_row_related_field_id": 316765,
+                            "has_related_field": true
                         },
                         {
                             "id": 316803,
@@ -1431,7 +1475,8 @@
                             "order": 16,
                             "primary": false,
                             "link_row_table_id": 54603,
-                            "link_row_related_field_id": 316886
+                            "link_row_related_field_id": 316886,
+                            "has_related_field": true
                         }
                     ],
                     "views": [
@@ -1465,8 +1510,8 @@
                                     "width": 147,
                                     "hidden": false,
                                     "order": 8,
-                                    "aggregation_type": "",
-                                    "aggregation_raw_type": ""
+                                    "aggregation_type": "unique_count",
+                                    "aggregation_raw_type": "unique_count"
                                 },
                                 {
                                     "id": 384318,
@@ -1907,7 +1952,10 @@
                                     "description": "Please enter the project's name in the field below.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 0
+                                    "order": 0,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17044,
@@ -1916,7 +1964,10 @@
                                     "description": "Please select the appropriate category for this project.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 1
+                                    "order": 1,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17045,
@@ -1925,7 +1976,10 @@
                                     "description": "Select the name of the project leader.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 2
+                                    "order": 2,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17046,
@@ -1934,7 +1988,10 @@
                                     "description": "Choose a project team member for this project.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 3
+                                    "order": 3,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17047,
@@ -1943,7 +2000,10 @@
                                     "description": "When is this project going to start?",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 4
+                                    "order": 4,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17048,
@@ -1952,7 +2012,10 @@
                                     "description": "When is the target date of completion for this project?",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 5
+                                    "order": 5,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17050,
@@ -1961,7 +2024,10 @@
                                     "description": "Please fill in any notes, instructions, or remarks related to this project.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 6
+                                    "order": 6,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17051,
@@ -1970,7 +2036,10 @@
                                     "description": "Select the tasks required for this project.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 7
+                                    "order": 7,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17049,
@@ -1979,7 +2048,10 @@
                                     "description": "Please select the current status of this project.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 8
+                                    "order": 8,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 }
                             ]
                         },
@@ -1993,6 +2065,7 @@
                             "filters": [],
                             "sortings": [],
                             "decorations": [],
+                            "public": false,
                             "single_select_field_id": 316814,
                             "field_options": [
                                 {
@@ -2252,7 +2325,8 @@
                             "order": 6,
                             "primary": false,
                             "link_row_table_id": 54607,
-                            "link_row_related_field_id": 314165
+                            "link_row_related_field_id": 314165,
+                            "has_related_field": true
                         },
                         {
                             "id": 316886,
@@ -2261,7 +2335,8 @@
                             "order": 9,
                             "primary": false,
                             "link_row_table_id": 54602,
-                            "link_row_related_field_id": 316887
+                            "link_row_related_field_id": 316887,
+                            "has_related_field": true
                         },
                         {
                             "id": 316890,
@@ -2284,7 +2359,8 @@
                             "order": 12,
                             "primary": false,
                             "link_row_table_id": 54605,
-                            "link_row_related_field_id": 316893
+                            "link_row_related_field_id": 316893,
+                            "has_related_field": true
                         },
                         {
                             "id": 316897,
@@ -2316,8 +2392,8 @@
                                     "width": 181,
                                     "hidden": false,
                                     "order": 5,
-                                    "aggregation_type": "",
-                                    "aggregation_raw_type": ""
+                                    "aggregation_type": "unique_count",
+                                    "aggregation_raw_type": "unique_count"
                                 },
                                 {
                                     "id": 384410,
@@ -2370,8 +2446,8 @@
                                     "width": 159,
                                     "hidden": false,
                                     "order": 3,
-                                    "aggregation_type": "",
-                                    "aggregation_raw_type": ""
+                                    "aggregation_type": "average",
+                                    "aggregation_raw_type": "average"
                                 }
                             ]
                         },
@@ -2573,7 +2649,10 @@
                                     "description": "Please enter a unique name for this task.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17053,
@@ -2582,7 +2661,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17054,
@@ -2591,7 +2673,10 @@
                                     "description": "Please select the project this task belongs to.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17055,
@@ -2600,7 +2685,10 @@
                                     "description": "Fill in the details or instructions for this task.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17056,
@@ -2609,7 +2697,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17057,
@@ -2618,7 +2709,10 @@
                                     "description": "Please select the team member assigned to work on this task.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17058,
@@ -2627,7 +2721,10 @@
                                     "description": "Type in the estimated number of days to complete this task.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 }
                             ]
                         }
@@ -2967,7 +3064,8 @@
                             "order": 5,
                             "primary": false,
                             "link_row_table_id": 54607,
-                            "link_row_related_field_id": 314162
+                            "link_row_related_field_id": 314162,
+                            "has_related_field": true
                         },
                         {
                             "id": 316688,
@@ -3036,7 +3134,8 @@
                             "order": 10,
                             "primary": false,
                             "link_row_table_id": 54602,
-                            "link_row_related_field_id": 316705
+                            "link_row_related_field_id": 316705,
+                            "has_related_field": true
                         },
                         {
                             "id": 316765,
@@ -3045,7 +3144,8 @@
                             "order": 11,
                             "primary": false,
                             "link_row_table_id": 54602,
-                            "link_row_related_field_id": 316764
+                            "link_row_related_field_id": 316764,
+                            "has_related_field": true
                         },
                         {
                             "id": 316893,
@@ -3054,7 +3154,8 @@
                             "order": 13,
                             "primary": false,
                             "link_row_table_id": 54603,
-                            "link_row_related_field_id": 316892
+                            "link_row_related_field_id": 316892,
+                            "has_related_field": true
                         },
                         {
                             "id": 322436,
@@ -3098,8 +3199,8 @@
                                     "width": 161,
                                     "hidden": false,
                                     "order": 8,
-                                    "aggregation_type": "",
-                                    "aggregation_raw_type": ""
+                                    "aggregation_type": "unique_count",
+                                    "aggregation_raw_type": "unique_count"
                                 },
                                 {
                                     "id": 384409,
@@ -3116,8 +3217,8 @@
                                     "width": 100,
                                     "hidden": false,
                                     "order": 0,
-                                    "aggregation_type": "",
-                                    "aggregation_raw_type": ""
+                                    "aggregation_type": "not_empty_percentage",
+                                    "aggregation_raw_type": "empty_count"
                                 },
                                 {
                                     "id": 387513,
@@ -3125,8 +3226,8 @@
                                     "width": 116,
                                     "hidden": false,
                                     "order": 1,
-                                    "aggregation_type": "",
-                                    "aggregation_raw_type": ""
+                                    "aggregation_type": "not_empty_percentage",
+                                    "aggregation_raw_type": "empty_count"
                                 },
                                 {
                                     "id": 387515,
@@ -3179,8 +3280,8 @@
                                     "width": 190,
                                     "hidden": false,
                                     "order": 2,
-                                    "aggregation_type": "",
-                                    "aggregation_raw_type": ""
+                                    "aggregation_type": "average",
+                                    "aggregation_raw_type": "average"
                                 }
                             ]
                         },
@@ -3207,6 +3308,7 @@
                                 }
                             ],
                             "decorations": [],
+                            "public": false,
                             "card_cover_image_field_id": 316688,
                             "field_options": [
                                 {
@@ -3294,6 +3396,7 @@
                                 }
                             ],
                             "decorations": [],
+                            "public": false,
                             "card_cover_image_field_id": 316688,
                             "field_options": [
                                 {
@@ -3386,7 +3489,10 @@
                                     "description": "Please enter the team member's name.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17090,
@@ -3395,7 +3501,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17091,
@@ -3404,7 +3513,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17092,
@@ -3413,7 +3525,10 @@
                                     "description": "Select the team member's role or designation from the selection below.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17093,
@@ -3422,7 +3537,10 @@
                                     "description": "Type in the current phone number of this team member.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17094,
@@ -3431,7 +3549,10 @@
                                     "description": "Type in the current email address of this team member.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17095,
@@ -3440,7 +3561,10 @@
                                     "description": "Select the project this team member is leading.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17096,
@@ -3449,7 +3573,10 @@
                                     "description": "Select a project where this team member is a part of.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17097,
@@ -3458,7 +3585,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 17098,
@@ -3467,7 +3597,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 }
                             ]
                         }

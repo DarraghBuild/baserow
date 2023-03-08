@@ -32,11 +32,18 @@
                     "fields": [
                         {
                             "id": 373164,
-                            "type": "text",
+                            "type": "formula",
                             "name": "ID number",
                             "order": 0,
                             "primary": true,
-                            "text_default": ""
+                            "error": null,
+                            "date_format": null,
+                            "date_include_time": null,
+                            "date_time_format": null,
+                            "number_decimal_places": null,
+                            "array_formula_type": null,
+                            "formula": "concat( \n  \"BR\", \n  if( \n    row_id() < 10, \n    concat(\"0000\", row_id()), \n    if( \n      row_id() < 100, \n      concat(\"000\", row_id()), \n      if( \n        row_id() < 1000, \n        concat(\"00\", row_id()), \n        if( \n          row_id() < 10000, \n          concat(\"0\", row_id()), \n          row_id() \n        ) \n      ) \n    ) \n  ) \n)",
+                            "formula_type": "text"
                         },
                         {
                             "id": 373165,
@@ -69,7 +76,8 @@
                             "order": 4,
                             "primary": false,
                             "link_row_table_id": 63479,
-                            "link_row_related_field_id": 373772
+                            "link_row_related_field_id": 373772,
+                            "has_related_field": true
                         },
                         {
                             "id": 373773,
@@ -78,7 +86,8 @@
                             "order": 5,
                             "primary": false,
                             "link_row_table_id": 63478,
-                            "link_row_related_field_id": 373774
+                            "link_row_related_field_id": 373774,
+                            "has_related_field": true
                         },
                         {
                             "id": 373775,
@@ -87,7 +96,8 @@
                             "order": 6,
                             "primary": false,
                             "link_row_table_id": 63480,
-                            "link_row_related_field_id": 373776
+                            "link_row_related_field_id": 373776,
+                            "has_related_field": true
                         },
                         {
                             "id": 373777,
@@ -214,7 +224,7 @@
                             "date_time_format": null,
                             "number_decimal_places": null,
                             "array_formula_type": null,
-                            "formula": "regex_replace(concat(field('First name'), \" \", field('Middle initial'), \" \", field('Last name')), \"  \", \" \")",
+                            "formula": "regex_replace( \n  concat( \n    field(\"First name\"), \n    \" \", \n    field(\"Middle initial\"), \n    if(isblank(field(\"Middle initial\")), \n      \"\", \n      \". \" \n    ), \n    field(\"Last name\")), \n  \"  \", \n  \" \"\n)",
                             "formula_type": "text"
                         },
                         {
@@ -246,19 +256,19 @@
                             "filters": [],
                             "sortings": [
                                 {
-                                    "id": 16642,
+                                    "id": 70011,
                                     "field_id": 373165,
                                     "order": "ASC"
                                 },
                                 {
-                                    "id": 16643,
+                                    "id": 70012,
                                     "field_id": 373166,
                                     "order": "ASC"
                                 }
                             ],
                             "decorations": [],
                             "public": false,
-                            "row_identifier_type": "id",
+                            "row_identifier_type": "count",
                             "field_options": [
                                 {
                                     "id": 470147,
@@ -474,9 +484,12 @@
                                     "field_id": 373164,
                                     "name": "",
                                     "description": "Please enter the unique company-provided employee ID number assigned to this employee. ex: BR00001",
-                                    "enabled": true,
+                                    "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 21913,
@@ -485,7 +498,10 @@
                                     "description": "Enter the employee's surname.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 21914,
@@ -494,7 +510,10 @@
                                     "description": "Enter the employee's given name.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 21915,
@@ -503,7 +522,10 @@
                                     "description": "Please indicate the employees middle initial.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 21916,
@@ -512,7 +534,10 @@
                                     "description": "Please select the employee's role or designation from the selection below.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 21917,
@@ -521,7 +546,10 @@
                                     "description": "Please indicate the department this employee belongs to.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 21918,
@@ -530,7 +558,10 @@
                                     "description": "Select the assigned office location for this employee.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 21919,
@@ -539,7 +570,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 21920,
@@ -548,7 +582,10 @@
                                     "description": "Please enter the local or extension number assigned to this employee.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 21921,
@@ -557,7 +594,10 @@
                                     "description": "Enter the employee's current phone or mobile number.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 21922,
@@ -566,7 +606,10 @@
                                     "description": "Please enter the employee's email address.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 21923,
@@ -575,7 +618,10 @@
                                     "description": "Enter the employee's current home address.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 21924,
@@ -584,7 +630,10 @@
                                     "description": "Please indicate the zip code of the employee's address.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 21925,
@@ -593,7 +642,10 @@
                                     "description": "Type in the employee's direct supervisor's full name.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 21926,
@@ -602,7 +654,10 @@
                                     "description": "Enter the employee's date of birth.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 21927,
@@ -611,7 +666,10 @@
                                     "description": "Fill in any notes or remarks about this employee.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 21928,
@@ -620,7 +678,10 @@
                                     "description": "Please enter the date this employee joined the organization.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 21929,
@@ -629,7 +690,10 @@
                                     "description": "Select the employee's employment status.",
                                     "enabled": true,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 21930,
@@ -638,7 +702,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 21931,
@@ -647,7 +714,10 @@
                                     "description": "Please indicate whether this employee is still with the organization.",
                                     "enabled": true,
                                     "required": false,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 },
                                 {
                                     "id": 23156,
@@ -656,7 +726,10 @@
                                     "description": "",
                                     "enabled": false,
                                     "required": true,
-                                    "order": 32767
+                                    "order": 32767,
+                                    "show_when_matching_conditions": false,
+                                    "condition_type": "AND",
+                                    "conditions": []
                                 }
                             ]
                         },
@@ -683,6 +756,7 @@
                                 }
                             ],
                             "decorations": [],
+                            "public": false,
                             "card_cover_image_field_id": 373777,
                             "field_options": [
                                 {
@@ -842,6 +916,7 @@
                                 }
                             ],
                             "decorations": [],
+                            "public": false,
                             "card_cover_image_field_id": 373777,
                             "field_options": [
                                 {
@@ -1001,6 +1076,7 @@
                                 }
                             ],
                             "decorations": [],
+                            "public": false,
                             "card_cover_image_field_id": 373777,
                             "field_options": [
                                 {
@@ -1160,6 +1236,7 @@
                                 }
                             ],
                             "decorations": [],
+                            "public": false,
                             "card_cover_image_field_id": 373777,
                             "field_options": [
                                 {
@@ -1319,6 +1396,7 @@
                                 }
                             ],
                             "decorations": [],
+                            "public": false,
                             "card_cover_image_field_id": 373777,
                             "field_options": [
                                 {
@@ -1466,6 +1544,7 @@
                             ],
                             "sortings": [],
                             "decorations": [],
+                            "public": false,
                             "single_select_field_id": 373787,
                             "card_cover_image_field_id": 373777,
                             "field_options": [
@@ -1603,11 +1682,11 @@
                             "id": 1,
                             "order": "1.00000000000000000000",
                             "created_on": "2022-05-11T02:41:08.429516+00:00",
-                            "updated_on": "2022-05-12T11:59:54.220891+00:00",
-                            "field_373164": "BR00101",
+                            "updated_on": "2023-02-08T14:20:36.536766+00:00",
+                            "field_373164": null,
                             "field_373165": "Fitzpatrick",
                             "field_373166": "Janice",
-                            "field_373770": "W",
+                            "field_373770": "E",
                             "field_373771": [
                                 12
                             ],
@@ -1642,11 +1721,11 @@
                             "id": 2,
                             "order": "2.00000000000000000000",
                             "created_on": "2022-05-11T02:41:08.431669+00:00",
-                            "updated_on": "2022-05-12T12:00:11.353757+00:00",
-                            "field_373164": "BR00102",
+                            "updated_on": "2023-02-08T14:20:51.250309+00:00",
+                            "field_373164": null,
                             "field_373165": "Pullen",
                             "field_373166": "Cinda",
-                            "field_373770": "V",
+                            "field_373770": "O",
                             "field_373771": [
                                 13
                             ],
@@ -1681,11 +1760,11 @@
                             "id": 3,
                             "order": "3.00000000000000000000",
                             "created_on": "2022-05-11T19:39:33.168366+00:00",
-                            "updated_on": "2022-05-12T12:00:26.563347+00:00",
-                            "field_373164": "BR00103",
+                            "updated_on": "2023-02-08T14:20:48.814482+00:00",
+                            "field_373164": null,
                             "field_373165": "Best",
                             "field_373166": "Clayton",
-                            "field_373770": "U",
+                            "field_373770": "I",
                             "field_373771": [
                                 14
                             ],
@@ -1720,11 +1799,11 @@
                             "id": 4,
                             "order": "4.00000000000000000000",
                             "created_on": "2022-05-11T19:39:45.735708+00:00",
-                            "updated_on": "2022-05-12T12:01:15.942465+00:00",
-                            "field_373164": "BR00104",
+                            "updated_on": "2023-02-08T14:20:27.518135+00:00",
+                            "field_373164": null,
                             "field_373165": "Mahon",
                             "field_373166": "Lane",
-                            "field_373770": "T",
+                            "field_373770": "C",
                             "field_373771": [
                                 15
                             ],
@@ -1759,11 +1838,11 @@
                             "id": 5,
                             "order": "5.00000000000000000000",
                             "created_on": "2022-05-11T19:39:54.036617+00:00",
-                            "updated_on": "2022-05-12T12:01:01.113424+00:00",
-                            "field_373164": "BR00105",
+                            "updated_on": "2023-02-08T14:20:56.495671+00:00",
+                            "field_373164": null,
                             "field_373165": "Ecker",
                             "field_373166": "Allie",
-                            "field_373770": "S",
+                            "field_373770": "O",
                             "field_373771": [
                                 16
                             ],
@@ -1798,11 +1877,11 @@
                             "id": 6,
                             "order": "6.00000000000000000000",
                             "created_on": "2022-05-11T19:40:00.883007+00:00",
-                            "updated_on": "2022-06-08T11:03:36.931416+00:00",
-                            "field_373164": "BR00106",
+                            "updated_on": "2023-02-08T14:20:05.739277+00:00",
+                            "field_373164": null,
                             "field_373165": "Nickson",
                             "field_373166": "Thomas",
-                            "field_373770": "R",
+                            "field_373770": "J",
                             "field_373771": [
                                 17
                             ],
@@ -1837,11 +1916,11 @@
                             "id": 7,
                             "order": "7.00000000000000000000",
                             "created_on": "2022-05-11T19:40:08.785002+00:00",
-                            "updated_on": "2022-06-08T11:02:14.580357+00:00",
-                            "field_373164": "BR00107",
+                            "updated_on": "2023-02-08T14:20:15.187032+00:00",
+                            "field_373164": null,
                             "field_373165": "Garcia",
                             "field_373166": "Paul",
-                            "field_373770": "Q",
+                            "field_373770": "A",
                             "field_373771": [
                                 11
                             ],
@@ -1876,11 +1955,11 @@
                             "id": 8,
                             "order": "8.00000000000000000000",
                             "created_on": "2022-05-11T19:40:16.141926+00:00",
-                            "updated_on": "2022-06-08T11:03:48.441429+00:00",
-                            "field_373164": "BR00108",
+                            "updated_on": "2023-02-08T14:20:10.646765+00:00",
+                            "field_373164": null,
                             "field_373165": "Tran",
                             "field_373166": "Rodney",
-                            "field_373770": "P",
+                            "field_373770": "E",
                             "field_373771": [
                                 10
                             ],
@@ -1915,11 +1994,11 @@
                             "id": 9,
                             "order": "9.00000000000000000000",
                             "created_on": "2022-05-11T19:40:26.829669+00:00",
-                            "updated_on": "2022-06-08T11:09:59.691829+00:00",
-                            "field_373164": "BR00109",
+                            "updated_on": "2023-02-08T14:20:44.568161+00:00",
+                            "field_373164": null,
                             "field_373165": "Johns",
                             "field_373166": "Donald",
-                            "field_373770": "O",
+                            "field_373770": "G",
                             "field_373771": [
                                 9
                             ],
@@ -1954,11 +2033,11 @@
                             "id": 10,
                             "order": "10.00000000000000000000",
                             "created_on": "2022-05-11T19:40:31.663881+00:00",
-                            "updated_on": "2022-06-08T11:10:15.245431+00:00",
-                            "field_373164": "BR00110",
+                            "updated_on": "2023-02-08T14:20:34.063260+00:00",
+                            "field_373164": null,
                             "field_373165": "Marshall",
                             "field_373166": "John",
-                            "field_373770": "N",
+                            "field_373770": "O",
                             "field_373771": [
                                 9
                             ],
@@ -1993,11 +2072,11 @@
                             "id": 11,
                             "order": "11.00000000000000000000",
                             "created_on": "2022-05-11T19:40:39.587277+00:00",
-                            "updated_on": "2022-06-08T11:10:36.606699+00:00",
-                            "field_373164": "BR00111",
+                            "updated_on": "2023-02-08T14:20:19.398727+00:00",
+                            "field_373164": null,
                             "field_373165": "Robicheaux",
                             "field_373166": "Michael",
-                            "field_373770": "M",
+                            "field_373770": "G",
                             "field_373771": [
                                 8
                             ],
@@ -2032,11 +2111,11 @@
                             "id": 12,
                             "order": "12.00000000000000000000",
                             "created_on": "2022-05-11T19:40:46.306898+00:00",
-                            "updated_on": "2022-06-08T11:10:06.365664+00:00",
-                            "field_373164": "BR00112",
+                            "updated_on": "2023-02-08T14:20:53.259757+00:00",
+                            "field_373164": null,
                             "field_373165": "Lopez",
                             "field_373166": "Bran",
-                            "field_373770": "L",
+                            "field_373770": "C",
                             "field_373771": [
                                 8
                             ],
@@ -2071,11 +2150,11 @@
                             "id": 13,
                             "order": "13.00000000000000000000",
                             "created_on": "2022-05-11T19:40:54.760610+00:00",
-                            "updated_on": "2022-06-08T11:10:59.618725+00:00",
-                            "field_373164": "BR00113",
+                            "updated_on": "2023-02-08T14:20:47.166828+00:00",
+                            "field_373164": null,
                             "field_373165": "Wright",
                             "field_373166": "Donald",
-                            "field_373770": "K",
+                            "field_373770": "S",
                             "field_373771": [
                                 7
                             ],
@@ -2110,11 +2189,11 @@
                             "id": 14,
                             "order": "14.00000000000000000000",
                             "created_on": "2022-05-11T19:41:01.712553+00:00",
-                            "updated_on": "2022-06-08T11:10:53.810645+00:00",
-                            "field_373164": "BR00114",
+                            "updated_on": "2023-02-08T14:20:21.400975+00:00",
+                            "field_373164": null,
                             "field_373165": "Tye",
                             "field_373166": "Leroy",
-                            "field_373770": "J",
+                            "field_373770": "S",
                             "field_373771": [
                                 5
                             ],
@@ -2149,11 +2228,11 @@
                             "id": 15,
                             "order": "15.00000000000000000000",
                             "created_on": "2022-05-11T19:41:06.453197+00:00",
-                            "updated_on": "2022-06-08T11:10:23.962858+00:00",
-                            "field_373164": "BR00115",
+                            "updated_on": "2023-02-08T14:20:17.659795+00:00",
+                            "field_373164": null,
                             "field_373165": "Mott",
                             "field_373166": "Nora",
-                            "field_373770": "I",
+                            "field_373770": "N",
                             "field_373771": [
                                 4
                             ],
@@ -2188,11 +2267,11 @@
                             "id": 16,
                             "order": "16.00000000000000000000",
                             "created_on": "2022-05-11T19:41:10.813481+00:00",
-                            "updated_on": "2022-06-08T11:09:34.685394+00:00",
-                            "field_373164": "BR00116",
+                            "updated_on": "2023-02-08T14:20:42.922259+00:00",
+                            "field_373164": null,
                             "field_373165": "Cunningham",
                             "field_373166": "Elizabeth",
-                            "field_373770": "H",
+                            "field_373770": "N",
                             "field_373771": [
                                 4
                             ],
@@ -2227,11 +2306,11 @@
                             "id": 17,
                             "order": "17.00000000000000000000",
                             "created_on": "2022-05-11T19:41:16.077611+00:00",
-                            "updated_on": "2022-06-08T11:03:40.563032+00:00",
-                            "field_373164": "BR00117",
+                            "updated_on": "2023-02-08T14:20:12.865319+00:00",
+                            "field_373164": null,
                             "field_373165": "Rethman",
                             "field_373166": "Richard",
-                            "field_373770": "G",
+                            "field_373770": "D",
                             "field_373771": [
                                 3
                             ],
@@ -2266,11 +2345,11 @@
                             "id": 18,
                             "order": "18.00000000000000000000",
                             "created_on": "2022-05-11T19:41:20.237265+00:00",
-                            "updated_on": "2022-06-08T11:01:47.074109+00:00",
-                            "field_373164": "BR00118",
+                            "updated_on": "2023-02-08T14:20:32.021527+00:00",
+                            "field_373164": null,
                             "field_373165": "Castillo",
                             "field_373166": "Jonathan",
-                            "field_373770": "F",
+                            "field_373770": "J",
                             "field_373771": [
                                 17
                             ],
@@ -2305,11 +2384,11 @@
                             "id": 19,
                             "order": "19.00000000000000000000",
                             "created_on": "2022-05-11T19:41:28.309129+00:00",
-                            "updated_on": "2022-06-08T11:03:46.024565+00:00",
-                            "field_373164": "BR00119",
+                            "updated_on": "2023-02-08T14:20:40.690271+00:00",
+                            "field_373164": null,
                             "field_373165": "Rothman",
                             "field_373166": "Eric",
-                            "field_373770": "E",
+                            "field_373770": "A",
                             "field_373771": [
                                 17
                             ],
@@ -2344,11 +2423,11 @@
                             "id": 20,
                             "order": "20.00000000000000000000",
                             "created_on": "2022-05-11T19:41:33.394918+00:00",
-                            "updated_on": "2022-06-08T11:03:53.563934+00:00",
-                            "field_373164": "BR00120",
+                            "updated_on": "2023-02-08T14:20:30.039535+00:00",
+                            "field_373164": null,
                             "field_373165": "Triplett",
                             "field_373166": "Judith",
-                            "field_373770": "D",
+                            "field_373770": "O",
                             "field_373771": [
                                 17
                             ],
@@ -2383,11 +2462,11 @@
                             "id": 21,
                             "order": "21.00000000000000000000",
                             "created_on": "2022-05-11T19:41:44.628479+00:00",
-                            "updated_on": "2022-06-08T11:02:17.554946+00:00",
-                            "field_373164": "BR00121",
+                            "updated_on": "2023-02-08T14:20:23.906409+00:00",
+                            "field_373164": null,
                             "field_373165": "Hogan",
                             "field_373166": "Lena",
-                            "field_373770": "C",
+                            "field_373770": "I",
                             "field_373771": [
                                 18
                             ],
@@ -2422,11 +2501,11 @@
                             "id": 22,
                             "order": "22.00000000000000000000",
                             "created_on": "2022-05-11T19:41:49.427338+00:00",
-                            "updated_on": "2022-06-08T11:02:27.805467+00:00",
-                            "field_373164": "BR00122",
+                            "updated_on": "2023-02-08T14:20:08.670800+00:00",
+                            "field_373164": null,
                             "field_373165": "Love",
                             "field_373166": "Sandra",
-                            "field_373770": "B",
+                            "field_373770": "O",
                             "field_373771": [
                                 18
                             ],
@@ -2461,11 +2540,11 @@
                             "id": 23,
                             "order": "23.00000000000000000000",
                             "created_on": "2022-05-11T19:41:59.705324+00:00",
-                            "updated_on": "2022-06-08T11:03:15.875139+00:00",
-                            "field_373164": "BR00123",
+                            "updated_on": "2023-02-08T14:20:25.565381+00:00",
+                            "field_373164": null,
                             "field_373165": "Mazon",
                             "field_373166": "Latisha",
-                            "field_373770": "A",
+                            "field_373770": "O",
                             "field_373771": [
                                 18
                             ],
@@ -2500,11 +2579,11 @@
                             "id": 24,
                             "order": "24.00000000000000000000",
                             "created_on": "2022-05-18T13:24:38.080771+00:00",
-                            "updated_on": "2022-06-08T11:02:09.079272+00:00",
-                            "field_373164": "BR00125",
+                            "updated_on": "2023-02-08T14:20:38.615777+00:00",
+                            "field_373164": null,
                             "field_373165": "Dradder",
                             "field_373166": "Jane",
-                            "field_373770": "Z",
+                            "field_373770": "D",
                             "field_373771": [
                                 18
                             ],
@@ -2564,7 +2643,8 @@
                             "order": 2,
                             "primary": false,
                             "link_row_table_id": 63477,
-                            "link_row_related_field_id": 373771
+                            "link_row_related_field_id": 373771,
+                            "has_related_field": true
                         },
                         {
                             "id": 374247,
@@ -2627,7 +2707,7 @@
                             "sortings": [],
                             "decorations": [],
                             "public": false,
-                            "row_identifier_type": "id",
+                            "row_identifier_type": "count",
                             "field_options": [
                                 {
                                     "id": 470153,
@@ -2671,8 +2751,8 @@
                                     "width": 152,
                                     "hidden": false,
                                     "order": 0,
-                                    "aggregation_type": "",
-                                    "aggregation_raw_type": ""
+                                    "aggregation_type": "not_empty_percentage",
+                                    "aggregation_raw_type": "empty_count"
                                 }
                             ]
                         },
@@ -2983,6 +3063,7 @@
                                     "value_provider_conf": {
                                         "colors": [
                                             {
+                                                "id": "b9e6d5f4-d45f-4b68-8949-bda9f39c7143",
                                                 "color": "light-red",
                                                 "filters": [
                                                     {
@@ -2999,6 +3080,7 @@
                                     "order": 1
                                 }
                             ],
+                            "public": false,
                             "single_select_field_id": 433657,
                             "field_options": [
                                 {
@@ -3308,7 +3390,8 @@
                             "order": 3,
                             "primary": false,
                             "link_row_table_id": 63477,
-                            "link_row_related_field_id": 373773
+                            "link_row_related_field_id": 373773,
+                            "has_related_field": true
                         },
                         {
                             "id": 374248,
@@ -3344,7 +3427,7 @@
                             ],
                             "decorations": [],
                             "public": false,
-                            "row_identifier_type": "id",
+                            "row_identifier_type": "count",
                             "field_options": [
                                 {
                                     "id": 470150,
@@ -3416,6 +3499,7 @@
                                 }
                             ],
                             "decorations": [],
+                            "public": false,
                             "field_options": [
                                 {
                                     "id": 9703,
@@ -3607,7 +3691,8 @@
                             "order": 5,
                             "primary": false,
                             "link_row_table_id": 63477,
-                            "link_row_related_field_id": 373775
+                            "link_row_related_field_id": 373775,
+                            "has_related_field": true
                         },
                         {
                             "id": 388244,
@@ -3683,7 +3768,7 @@
                             ],
                             "decorations": [],
                             "public": false,
-                            "row_identifier_type": "id",
+                            "row_identifier_type": "count",
                             "field_options": [
                                 {
                                     "id": 470156,
@@ -3700,8 +3785,8 @@
                                     "width": 100,
                                     "hidden": false,
                                     "order": 0,
-                                    "aggregation_type": "",
-                                    "aggregation_raw_type": ""
+                                    "aggregation_type": "not_empty_percentage",
+                                    "aggregation_raw_type": "empty_count"
                                 },
                                 {
                                     "id": 470155,
@@ -3763,8 +3848,8 @@
                                     "width": 159,
                                     "hidden": false,
                                     "order": 7,
-                                    "aggregation_type": "",
-                                    "aggregation_raw_type": ""
+                                    "aggregation_type": "sum",
+                                    "aggregation_raw_type": "sum"
                                 },
                                 {
                                     "id": 534043,
@@ -3793,6 +3878,7 @@
                                 }
                             ],
                             "decorations": [],
+                            "public": false,
                             "card_cover_image_field_id": 373174,
                             "field_options": [
                                 {

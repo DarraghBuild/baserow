@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.db import OperationalError
 from django.utils import timezone
 
 from pytz import timezone as pytz_timezone
@@ -7,7 +8,8 @@ from pytz.exceptions import UnknownTimeZoneError
 from rest_framework import serializers, status
 from rest_framework.exceptions import APIException
 
-from baserow.core.exceptions import PermissionException
+from baserow.api.errors import ERROR_MAX_LOCKS_PER_TRANSACTION_EXCEEDED
+from baserow.core.exceptions import PermissionException, is_max_lock_exceeded_exception
 
 from .exceptions import (
     QueryParameterValidationException,
@@ -18,7 +20,7 @@ from .utils import map_exceptions as map_exceptions_utility
 from .utils import validate_data, validate_data_custom_fields
 
 
-def map_exceptions(exceptions: ExceptionMappingType):
+def map_exceptions(exceptions: ExceptionMappingType = None):
     """
     This decorator simplifies mapping specific exceptions to a standard api response.
     Note that this decorator uses the map_exception function from baserow.api.utils
@@ -76,12 +78,27 @@ def map_exceptions(exceptions: ExceptionMappingType):
       # SomeException will be thrown directly if the provided callable returns None.
     """
 
+    # If a view needs no mappings, but does need the permission
+    # denied mapping, then allow the decorator to be called with
+    # no `exceptions`.
+    if exceptions is None:
+        exceptions = {}
+
     # Add globally permission denied exception mapping if missing
     if PermissionException not in exceptions:
         exceptions[PermissionException] = (
             "PERMISSION_DENIED",
             401,
             "You don't have the required permission to execute this operation.",
+        )
+    # Add global `OperationalError` exception mapping if missing.
+    # This is used to detect if `max_locks_per_transaction` has
+    # been exceeded, and in which case we return a specific error.
+    if OperationalError not in exceptions:
+        exceptions[OperationalError] = (
+            lambda e: ERROR_MAX_LOCKS_PER_TRANSACTION_EXCEEDED
+            if is_max_lock_exceeded_exception(e)
+            else None
         )
 
     def map_exceptions_decorator(func):

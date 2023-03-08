@@ -5,10 +5,6 @@ import RowEditFieldNumber from '@baserow/modules/database/components/row/RowEdit
 import RowEditFieldDateReadOnly from '@baserow/modules/database/components/row/RowEditFieldDateReadOnly'
 import GridViewFieldLongText from '@baserow/modules/database/components/view/grid/fields/GridViewFieldLongText'
 import RowEditFieldBoolean from '@baserow/modules/database/components/row/RowEditFieldBoolean'
-import FunctionalGridViewFieldDate from '@baserow/modules/database/components/view/grid/fields/FunctionalGridViewFieldDate'
-import FunctionalGridViewFieldBoolean from '@baserow/modules/database/components/view/grid/fields/FunctionalGridViewFieldBoolean'
-import FunctionalGridViewFieldSingleSelect from '@baserow/modules/database/components/view/grid/fields/FunctionalGridViewFieldSingleSelect'
-import FunctionalGridViewFieldNumber from '@baserow/modules/database/components/view/grid/fields/FunctionalGridViewFieldNumber'
 import FunctionalGridViewFieldLongText from '@baserow/modules/database/components/view/grid/fields/FunctionalGridViewFieldLongText'
 import FunctionalGridViewFieldText from '@baserow/modules/database/components/view/grid/fields/FunctionalGridViewFieldText'
 import FunctionalGridViewFieldBlank from '@baserow/modules/database/components/view/grid/fields/FunctionalGridViewFieldBlank'
@@ -27,6 +23,8 @@ import RowCardFieldArray from '@baserow/modules/database/components/card/RowCard
 import RowEditFieldBlank from '@baserow/modules/database/components/row/RowEditFieldBlank'
 import RowCardFieldBlank from '@baserow/modules/database/components/card/RowCardFieldBlank'
 import RowCardFieldLink from '@baserow/modules/database/components/card/RowCardFieldLink'
+import GridViewFieldLinkURL from '@baserow/modules/database/components/view/grid/fields/GridViewFieldLinkURL.vue'
+import GridViewFieldText from '@baserow/modules/database/components/view/grid/fields/GridViewFieldText.vue'
 
 export class BaserowFormulaTypeDefinition extends Registerable {
   getIconClass() {
@@ -42,14 +40,15 @@ export class BaserowFormulaTypeDefinition extends Registerable {
   }
 
   getFunctionalGridViewFieldComponent() {
-    throw new Error(
-      'Not implemented error. This method should return the types functional grid' +
-        ' view field component.'
-    )
+    return this.app.$registry
+      .get('field', this.getFieldType())
+      .getFunctionalGridViewFieldComponent()
   }
 
   getGridViewFieldComponent() {
-    return this.getFunctionalGridViewFieldComponent()
+    return this.app.$registry
+      .get('field', this.getFieldType())
+      .getGridViewFieldComponent()
   }
 
   getFieldType() {
@@ -120,12 +119,12 @@ export class BaserowFormulaTextType extends BaserowFormulaTypeDefinition {
     return 'font'
   }
 
-  getGridViewFieldComponent() {
-    return GridViewFieldLongText
-  }
-
   getRowEditFieldComponent() {
     return RowEditFieldLongText
+  }
+
+  getGridViewFieldComponent() {
+    return GridViewFieldLongText
   }
 
   getFunctionalGridViewFieldComponent() {
@@ -180,10 +179,6 @@ export class BaserowFormulaNumberType extends BaserowFormulaTypeDefinition {
     return RowEditFieldNumber
   }
 
-  getFunctionalGridViewFieldComponent() {
-    return FunctionalGridViewFieldNumber
-  }
-
   getSortOrder() {
     return 2
   }
@@ -204,10 +199,6 @@ export class BaserowFormulaBooleanType extends BaserowFormulaTypeDefinition {
 
   getRowEditFieldComponent() {
     return RowEditFieldBoolean
-  }
-
-  getFunctionalGridViewFieldComponent() {
-    return FunctionalGridViewFieldBoolean
   }
 
   getSortOrder() {
@@ -236,10 +227,6 @@ export class BaserowFormulaDateType extends BaserowFormulaTypeDefinition {
     return RowEditFieldDateReadOnly
   }
 
-  getFunctionalGridViewFieldComponent() {
-    return FunctionalGridViewFieldDate
-  }
-
   getSortOrder() {
     return 4
   }
@@ -264,6 +251,10 @@ export class BaserowFormulaDateIntervalType extends BaserowFormulaTypeDefinition
 
   getRowEditFieldComponent() {
     return RowEditFieldText
+  }
+
+  getGridViewFieldComponent() {
+    return GridViewFieldText
   }
 
   getFunctionalGridViewFieldComponent() {
@@ -431,10 +422,6 @@ export class BaserowFormulaSingleSelectType extends BaserowFormulaTypeDefinition
     return RowEditFieldSingleSelectReadOnly
   }
 
-  getFunctionalGridViewFieldComponent() {
-    return FunctionalGridViewFieldSingleSelect
-  }
-
   getFunctionalGridViewFieldArrayComponent() {
     return FunctionalFormulaSingleSelectArrayItem
   }
@@ -467,6 +454,10 @@ export class BaserowFormulaLinkType extends BaserowFormulaTypeDefinition {
 
   getFunctionalGridViewFieldComponent() {
     return FunctionalGridViewFieldLink
+  }
+
+  getGridViewFieldComponent() {
+    return GridViewFieldLinkURL
   }
 
   getSortOrder() {

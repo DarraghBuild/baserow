@@ -1,5 +1,9 @@
 <template>
-  <Context ref="context">
+  <Context
+    ref="context"
+    class="field-form-context"
+    @shown="$emit('shown', $event)"
+  >
     <FieldForm
       ref="form"
       :table="table"
@@ -92,6 +96,9 @@ export default {
           notifyIf(error, 'field')
         }
       }
+    },
+    showFieldTypesDropdown(target) {
+      this.$refs.form.showFieldTypesDropdown(target)
     },
   },
 }

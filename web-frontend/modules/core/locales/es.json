@@ -105,7 +105,8 @@
     "groupInviteForm": {
         "invitationFormTitle": "Invitar por correo electrónico",
         "optionalMessagePlaceholder": "Mensaje opcional",
-        "errorInvalidEmail": "Por favor, introduce una dirección de correo electrónico válida."
+        "errorInvalidEmail": "Por favor, introduce una dirección de correo electrónico válida.",
+        "errorTooLongMessage": "Los mensajes están limitados a {cantidad} caracteres."
     },
     "groupsContext": {
         "search": "Buscar grupos",
@@ -122,7 +123,9 @@
     "createGroupModal": {
         "createNew": "Crear grupo nuevo",
         "add": "Añadir grupo",
-        "defaultName": "Grupo sin titulo"
+        "defaultName": "Grupo sin titulo",
+        "permissionDeniedTitle": "Permiso denegado",
+        "permissionDeniedBody": "No tienes los permisos necesarios para crear un grupo nuevo."
     },
     "templateCategories": {
         "search": "Buscar plantillas",
@@ -160,7 +163,8 @@
     },
     "trashModal": {
         "emptyTitle": "No se encontraron grupos",
-        "emptyMessage": "No eres miembro de ningún grupo. Las aplicaciones, como las bases de datos, pertenecen a un grupo, por lo que, para crearlas, debe crear un grupo."
+        "emptyMessage": "No eres miembro de ningún grupo. Las aplicaciones, como las bases de datos, pertenecen a un grupo, por lo que, para crearlas, debe crear un grupo.",
+        "emptyMessageWithoutCreatePermission": "No eres miembro de ningún grupo. Las aplicaciones como las bases de datos pertenecen a un grupo, así que para crearlas tendrás que ser invitado primero a un grupo por un administrador."
     },
     "uploadViaURLUserFileUpload": {
         "title": "Subir desde una URL",
@@ -216,7 +220,8 @@
         "shareOnTwitter": "Tuitea sobre Baserow",
         "shareOnReddit": "Compartir en Reddit",
         "shareOnFacebook": "Compartir en Facebook",
-        "shareOnLinkedIn": "Compartir en LinkedIn"
+        "shareOnLinkedIn": "Compartir en LinkedIn",
+        "noGroupTextWithoutCreatePermission": "No eres miembro de ningún grupo. Las aplicaciones como las bases de datos pertenecen a un grupo, así que para crearlas tendrás que ser invitado primero a un grupo por un administrador."
     },
     "login": {
         "title": "Acceso",
@@ -280,7 +285,13 @@
         "userDeletionGraceDelay": "Eliminación de usuarios",
         "settingUserDeletionGraceDelay": "Retraso de gracia",
         "settingUserDeletionGraceDelayDescription": "Este es el número de días sin iniciar sesión después de los cuales una cuenta programada para ser eliminada se borra permanentemente.",
-        "invalidAccountDeletionGraceDelay": "Este valor es obligatorio y debe ser un entero positivo menor que 32000"
+        "invalidAccountDeletionGraceDelay": "Este valor es obligatorio y debe ser un entero positivo menor que 32000",
+        "settingAllowNonStaffCreateGroupOperation": "Permitir a todos crear nuevos grupos",
+        "settingAllowNonStaffCreateGroupOperationDescription": "Por defecto, todos pueden crear grupos nuevos. Desactívalo para que sólo el equipo pueda crear nuevos grupos.",
+        "settingAllowNonStaffCreateGroupOperationWarning": "A los nuevos usuarios se les creará automáticamente un grupo en el que serán administradores.",
+        "maintenance": "Mantenimiento",
+        "settingTrackGroupUsage": "Seguimiento del uso del grupo",
+        "settingTrackGroupUsageDescription": "Activa un trabajo nocturno que cuenta el uso de filas y archivos por grupo, mostrado en la página de administración de grupos premium."
     },
     "copyingNotification": {
         "title": "Copiando...",
@@ -421,7 +432,10 @@
     "datetime": {
         "daysAgo": "Hace 0 días | Hace 1 día | Hace {n} días",
         "monthsAgo": "Hace 0 meses | Hace 1 mes | Hace {n} meses",
-        "yearsAgo": "Hace 0 años | Hace 1 año | Hace {n} años"
+        "yearsAgo": "Hace 0 años | Hace 1 año | Hace {n} años",
+        "minutesAgo": "Hace 0 minutos | Hace 1 minuto | Hace {n} minutos",
+        "hoursAgo": "Hace 0 horas | Hace 1 hora | Hace {n} horas",
+        "secondsAgo": "Ahora mismo | Hace 1 segundo | Hace {n} segundos"
     },
     "InstallTemplateJobType": {
         "installing": "Instalando",
@@ -440,7 +454,9 @@
                 "email": "Correo electrónico",
                 "role": "Rol predeterminado",
                 "name": "Nombre",
-                "teams": "Equipos"
+                "teams": "Equipos",
+                "highestRole": "Cargo más alto",
+                "highestRoleHelpText": "El rol más alto que este usuario tiene asignado directamente o desde un equipo, sobre cualquier cosa en este grupo"
             },
             "actions": {
                 "remove": "Eliminar del grupo",
@@ -469,7 +485,8 @@
                     "text": "No es posible enviar una invitación cuando el usuario ya es miembro del grupo."
                 }
             },
-            "submit": "Enviar invitación"
+            "submit": "Enviar invitación",
+            "helpIconText": "El rol seleccionado será el rol por defecto de los usuarios en este grupo."
         },
         "membersTabTitle": "Miembros",
         "invitesTabTitle": "Invitaciones"
@@ -479,7 +496,9 @@
         "content": "Se ha cerrado la sesión porque el token de autenticación ha caducado. Por favor, inicie sesión de nuevo."
     },
     "memberAssignmentModalFooter": {
-        "invite": "Invita a {count}"
+        "invite": "Invita a {count}",
+        "selectAll": "Seleccionar todo",
+        "deselectAll": "Deseleccionar todo"
     },
     "memberSelectionList": {
         "searchPlaceholder": "Encuentra...",
@@ -489,5 +508,16 @@
         "confirmation": "¿Estás seguro de que quieres eliminar a {name} de {group_name}? Esta acción no se puede deshacer.",
         "title": "Confirmar la eliminación del grupo",
         "remove": "Quitar"
+    },
+    "permissionsUpdatedNotification": {
+        "title": "Permisos actualizados",
+        "content": "Esto puede afectar a lo que tienes acceso. Por favor recarga la página.",
+        "action": "Recargar"
+    },
+    "editRoleContext": {
+        "billableRolesLink": "Documentación sobre funciones facturables"
+    },
+    "highestPaidRoleField": {
+        "billable": "Facturable"
     }
 }

@@ -1,6 +1,4 @@
-import logging
 import traceback
-from copy import deepcopy
 from datetime import datetime
 from typing import List, Optional, Set, Tuple
 
@@ -10,11 +8,21 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from baserow.core.action.models import Action
-from baserow.core.action.registries import ActionScopeStr, action_type_registry
-from baserow.core.exceptions import LockConflict
+from loguru import logger
+from opentelemetry import trace
 
-logger = logging.getLogger(__name__)
+from baserow.core.exceptions import LockConflict
+from baserow.core.telemetry.utils import baserow_trace, baserow_trace_methods
+
+from .models import Action
+from .registries import (
+    ActionScopeStr,
+    UndoableActionCustomCleanupMixin,
+    action_type_registry,
+)
+from .signals import ActionCommandType
+
+tracer = trace.get_tracer(__name__)
 
 
 def scopes_to_q_filter(scopes: List[ActionScopeStr]):
@@ -35,11 +43,31 @@ class OneActionHasErrorAndCannotBeRedone(Exception):
     """
 
 
-class ActionHandler:
+class ActionHandler(metaclass=baserow_trace_methods(tracer)):
+
     """
     Contains methods to do high level operations on ActionType's like undoing or
     redoing them.
     """
+
+    @classmethod
+    def send_action_done_signal_for_actions(
+        cls,
+        user: AbstractUser,
+        actions: List[Action],
+        action_command_type: ActionCommandType,
+        **kwargs,
+    ) -> None:
+        for action in actions:
+            action_type = action_type_registry.get(action.type)
+            action_type.send_action_done_signal(
+                user,
+                action.params,
+                action.scope,
+                action.group,
+                action.updated_on,
+                action_command_type,
+            )
 
     @classmethod
     def _undo_action(
@@ -50,7 +78,7 @@ class ActionHandler:
             # noinspection PyBroadException
             action_type = action_type_registry.get(action.type)
             # noinspection PyArgumentList
-            latest_params = action_type.Params(**deepcopy(action.params))
+            latest_params = action_type.serialized_to_params(action.params)
 
             action_type.undo(user, latest_params, action)
             # action.params could be changed, so save the action
@@ -62,6 +90,7 @@ class ActionHandler:
             raise exc
 
     @classmethod
+    @baserow_trace(tracer)
     def undo(
         cls, user: AbstractUser, scopes: List[ActionScopeStr], session: str
     ) -> List[Action]:
@@ -114,7 +143,9 @@ class ActionHandler:
             )
 
         # refresh actions from db to ensure everything is updated
-        return list(Action.objects.filter(pk__in=action_being_undone_ids))
+        actions = list(Action.objects.filter(pk__in=action_being_undone_ids))
+        cls.send_action_done_signal_for_actions(user, actions, ActionCommandType.UNDO)
+        return actions
 
     @classmethod
     def _redo_action(cls, user: AbstractUser, action: Action) -> None:
@@ -123,7 +154,7 @@ class ActionHandler:
             action_being_redone = action
             action_type = action_type_registry.get(action.type)
             # noinspection PyArgumentList
-            latest_params = action_type.Params(**deepcopy(action.params))
+            latest_params = action_type.serialized_to_params(action.params)
 
             action_type.redo(user, latest_params, action_being_redone)
 
@@ -136,6 +167,7 @@ class ActionHandler:
             raise exc
 
     @classmethod
+    @baserow_trace(tracer)
     def redo(
         cls, user: AbstractUser, scopes: List[ActionScopeStr], session: str
     ) -> List[Action]:
@@ -220,14 +252,16 @@ class ActionHandler:
                 )
 
         # refresh actions from db to ensure everything is updated
-        return list(
+        actions = list(
             Action.objects.filter(pk__in=actions_being_redone_ids).order_by(
                 "created_on", "id"
             )
         )
+        cls.send_action_done_signal_for_actions(user, actions, ActionCommandType.REDO)
+        return actions
 
     @classmethod
-    def clean_up_old_actions(cls):
+    def clean_up_old_undoable_actions(cls):
         """
         Any actions which haven't been updated in
         settings.MINUTES_UNTIL_ACTION_CLEANED_UP will be deleted any have an extra
@@ -240,7 +274,7 @@ class ActionHandler:
 
         types_with_custom_clean_up = set()
         for action_type in action_type_registry.get_all():
-            if action_type.has_custom_cleanup():
+            if isinstance(action_type, UndoableActionCustomCleanupMixin):
                 types_with_custom_clean_up.add(action_type.type)
 
         # Delete in a separate atomic block so if we crash later we don't roll back

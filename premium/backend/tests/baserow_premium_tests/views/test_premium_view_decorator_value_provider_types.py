@@ -41,7 +41,7 @@ def test_import_export_grid_view_w_decorator(data_fixture):
     id_mapping = {"database_fields": {field.id: imported_field.id}}
 
     grid_view_type = view_type_registry.get("grid")
-    serialized = grid_view_type.export_serialized(grid_view, None, None)
+    serialized = grid_view_type.export_serialized(grid_view, None, None, None)
     imported_grid_view = grid_view_type.import_serialized(
         grid_view.table, serialized, id_mapping, None, None
     )
@@ -63,25 +63,28 @@ def test_import_export_grid_view_w_decorator(data_fixture):
         view_decoration_2.value_provider_type
         == imported_view_decorations[1].value_provider_type
     )
-    assert imported_view_decorations[1].value_provider_conf == {
-        "colors": [
-            {"filters": [{"field": imported_field.id}]},
-            {"filters": [{"field": imported_field.id}]},
-        ]
-    }
+
+    # a new id is generated for every inserted color
+    for color in imported_view_decorations[1].value_provider_conf["colors"]:
+        assert color["id"] is not None
+        assert color["filters"][0]["field"] == imported_field.id
 
 
 @pytest.mark.django_db
 def test_field_type_changed_w_decoration(data_fixture):
-    user = data_fixture.create_user()
-    table = data_fixture.create_database_table(user=user)
+    group = data_fixture.create_group()
+    user = data_fixture.create_user(group=group)
+    database = data_fixture.create_database_application(group=group)
+    table = data_fixture.create_database_table(user=user, database=database)
     text_field = data_fixture.create_text_field(table=table)
     option_field = data_fixture.create_single_select_field(
         table=table, name="option_field", order=1
     )
     data_fixture.create_select_option(field=option_field, value="A", color="blue")
 
-    grid_view = data_fixture.create_grid_view(table=table)
+    grid_view = data_fixture.create_grid_view(
+        table=table, ownership_type="collaborative"
+    )
 
     select_view_decoration = data_fixture.create_view_decoration(
         view=grid_view,
@@ -238,8 +241,13 @@ def test_create_single_select_color_with_premium_license(premium_data_fixture):
 @pytest.mark.django_db
 @override_settings(DEBUG=True)
 def test_create_single_select_color_without_premium_license(premium_data_fixture):
-    user = premium_data_fixture.create_user(has_active_premium_license=False)
-    grid_view = premium_data_fixture.create_grid_view(user=user)
+    group = premium_data_fixture.create_group()
+    database = premium_data_fixture.create_database_application(group=group)
+    table = premium_data_fixture.create_database_table(database=database)
+    user = premium_data_fixture.create_user(
+        has_active_premium_license=False, group=group
+    )
+    grid_view = premium_data_fixture.create_grid_view(user=user, table=table)
 
     handler = ViewHandler()
 

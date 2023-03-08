@@ -6,7 +6,7 @@
 #
 argh==0.26.2
     # via -r dev.in
-asgiref==3.4.1
+asgiref==3.6.0
     # via
     #   -c base.txt
     #   django
@@ -62,7 +62,7 @@ decorator==5.1.1
     # via
     #   -c base.txt
     #   ipython
-django==3.2.13
+django==3.2.18
     # via
     #   -c base.txt
     #   django-extensions
@@ -150,7 +150,6 @@ openapi-spec-validator==0.4.0
     # via -r dev.in
 packaging==21.3
     # via
-    #   -c base.txt
     #   build
     #   pytest
 parso==0.8.3
@@ -209,9 +208,7 @@ pygments==2.13.0
 pyinstrument==4.0.3
     # via -r dev.in
 pyparsing==3.0.9
-    # via
-    #   -c base.txt
-    #   packaging
+    # via packaging
 pyrsistent==0.18.1
     # via
     #   -c base.txt
@@ -273,7 +270,7 @@ pyyaml==6.0
     #   -c base.txt
     #   bandit
     #   openapi-spec-validator
-requests==2.26.0
+requests==2.28.2
     # via
     #   -c base.txt
     #   coreapi

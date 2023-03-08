@@ -91,9 +91,12 @@ def test_exporting_missing_view_returns_error(data_fixture, api_client, tmpdir):
 def test_exporting_view_which_isnt_for_table_returns_error(
     data_fixture, api_client, tmpdir
 ):
-    user, token = data_fixture.create_user_and_token()
-    table = data_fixture.create_database_table(user=user)
-    grid_view_for_other_table = data_fixture.create_grid_view()
+    group = data_fixture.create_group()
+    user, token = data_fixture.create_user_and_token(group=group)
+    database = data_fixture.create_database_application(group=group)
+    table = data_fixture.create_database_table(user=user, database=database)
+    table2 = data_fixture.create_database_table(user=user, database=database)
+    grid_view_for_other_table = data_fixture.create_grid_view(table=table2)
     response = api_client.post(
         reverse(
             "api:database:export:export_table",
@@ -258,6 +261,7 @@ def test_exporting_csv_writes_file_to_storage(
                 "exported_file_name": None,
                 "exporter_type": "csv",
                 "progress_percentage": 0.0,
+                "state": "pending",
                 "status": "pending",
                 "table": table.id,
                 "view": grid_view.id,
@@ -275,8 +279,9 @@ def test_exporting_csv_writes_file_to_storage(
                 "created_at": expected_created_at,
                 "exported_file_name": filename,
                 "exporter_type": "csv",
-                "progress_percentage": 1.0,
-                "status": "complete",
+                "progress_percentage": 100.0,
+                "state": "finished",
+                "status": "finished",
                 "table": table.id,
                 "view": grid_view.id,
                 "url": f"http://localhost:8000/media/export_files/{filename}",
@@ -375,6 +380,7 @@ def test_exporting_csv_table_writes_file_to_storage(
                 "exported_file_name": None,
                 "exporter_type": "csv",
                 "progress_percentage": 0.0,
+                "state": "pending",
                 "status": "pending",
                 "table": table.id,
                 "view": None,
@@ -392,8 +398,9 @@ def test_exporting_csv_table_writes_file_to_storage(
                 "created_at": expected_created_at,
                 "exported_file_name": filename,
                 "exporter_type": "csv",
-                "progress_percentage": 1.0,
-                "status": "complete",
+                "progress_percentage": 100.0,
+                "state": "finished",
+                "status": "finished",
                 "table": table.id,
                 "view": None,
                 "url": f"http://localhost:8000/media/export_files/{filename}",

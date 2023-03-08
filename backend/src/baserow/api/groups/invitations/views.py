@@ -31,6 +31,14 @@ from baserow.api.groups.serializers import GroupUserGroupSerializer
 from baserow.api.groups.users.errors import ERROR_GROUP_USER_ALREADY_EXISTS
 from baserow.api.mixins import SearchableViewMixin, SortableViewMixin
 from baserow.api.schemas import get_error_schema
+from baserow.core.action.registries import action_type_registry
+from baserow.core.actions import (
+    AcceptGroupInvitationActionType,
+    CreateGroupInvitationActionType,
+    DeleteGroupInvitationActionType,
+    RejectGroupInvitationActionType,
+    UpdateGroupInvitationActionType,
+)
 from baserow.core.exceptions import (
     BaseURLHostnameNotAllowed,
     GroupDoesNotExist,
@@ -168,9 +176,17 @@ class GroupInvitationsView(APIView, SortableViewMixin, SearchableViewMixin):
         """Creates a new group invitation and sends it the provided email."""
 
         group = CoreHandler().get_group(group_id)
-        group_invitation = CoreHandler().create_group_invitation(
-            request.user, group, **data
+        group_invitation = action_type_registry.get(
+            CreateGroupInvitationActionType.type
+        ).do(
+            request.user,
+            group,
+            data["email"],
+            data["permissions"],
+            data["base_url"],
+            data.get("message", ""),
         )
+
         return Response(GroupInvitationSerializer(group_invitation).data)
 
 
@@ -274,10 +290,9 @@ class GroupInvitationView(APIView):
         if is_email_super_admin(group_invitation.email):
             raise ModifySuperAdminError(group_invitation.email)
 
-        group_invitation = CoreHandler().update_group_invitation(
-            request.user, group_invitation, **data
-        )
-
+        group_invitation = action_type_registry.get(
+            UpdateGroupInvitationActionType.type
+        ).do(request.user, group_invitation, **data)
         return Response(GroupInvitationSerializer(group_invitation).data)
 
     @extend_schema(
@@ -328,7 +343,9 @@ class GroupInvitationView(APIView):
         if is_email_super_admin(group_invitation.email):
             raise ModifySuperAdminError(group_invitation.email)
         
-        CoreHandler().delete_group_invitation(request.user, group_invitation)
+        action_type_registry.get(DeleteGroupInvitationActionType.type).do(
+            request.user, group_invitation
+        )
         return Response(status=204)
 
 
@@ -377,7 +394,7 @@ class AcceptGroupInvitationView(APIView):
                 f"The group invitation with id {group_invitation_id} does not exist."
             )
 
-        group_user = CoreHandler().accept_group_invitation(
+        group_user = action_type_registry.get(AcceptGroupInvitationActionType.type).do(
             request.user, group_invitation
         )
         groupuser_group = (
@@ -431,7 +448,9 @@ class RejectGroupInvitationView(APIView):
                 f"The group invitation with id {group_invitation_id} does not exist."
             )
 
-        CoreHandler().reject_group_invitation(request.user, group_invitation)
+        action_type_registry.get(RejectGroupInvitationActionType.type).do(
+            request.user, group_invitation
+        )
         return Response(status=204)
 
 

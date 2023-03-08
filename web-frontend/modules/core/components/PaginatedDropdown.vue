@@ -40,7 +40,7 @@
       >
         <DropdownItem
           v-if="addEmptyItem"
-          :name="''"
+          :name="emptyItemDisplayName"
           :value="null"
         ></DropdownItem>
         <DropdownItem
@@ -91,6 +91,10 @@ export default {
       required: false,
       default: true,
     },
+    emptyItemDisplayName: {
+      type: [String],
+      default: '',
+    },
     notSelectedText: {
       type: [String, null],
       required: false,
@@ -100,6 +104,11 @@ export default {
       type: [String, null],
       required: false,
       default: null,
+    },
+    debounceTime: {
+      type: Number,
+      required: false,
+      default: 400,
     },
   },
   data() {
@@ -121,7 +130,16 @@ export default {
       this.results = await this.fetch(this.page, this.query)
     }
   },
+  created() {
+    // Small debounce when searching to prevent a lot of requests to the backend.
+    this._search = debounce(async function () {
+      this.results = await this.fetch(this.page, this.query)
+    }, this.debounceTime)
+  },
   methods: {
+    clear() {
+      this.displayName = this.initialDisplayName
+    },
     /**
      * Because the dropdown items could be destroyed in case of a search and because we
      * don't need reactivity, we store a copy of the name as display name as soon as it
@@ -158,12 +176,6 @@ export default {
       this.loading = true
       this._search()
     },
-    /**
-     * Small debounce when searching to prevent a lot of requests to the backend.
-     */
-    _search: debounce(async function () {
-      this.results = await this.fetch(this.page, this.query)
-    }, 400),
     /**
      * When the user scrolls in the results, we can check if the user is near the end
      * and if so a new page will be loaded.

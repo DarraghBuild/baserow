@@ -94,8 +94,10 @@
     <div v-if="forcedType === null" class="control">
       <div class="control__elements">
         <Dropdown
+          ref="fieldTypesDropdown"
           v-model="values.type"
           :class="{ 'dropdown--error': $v.values.type.$error }"
+          class="field-form-context__dropdown"
           @hide="$v.values.type.$touch()"
         >
           <DropdownItem
@@ -193,6 +195,15 @@ export default {
       fields: 'field/getAll',
     }),
   },
+  watch: {
+    'values.type'(newValueType, oldValueType) {
+      if (
+        this.values.name === '' ||
+        this.values.name === this.fieldTypes[oldValueType]?.getName()
+      )
+        this.values.name = this.fieldTypes[newValueType]?.getName()
+    },
+  },
   validations() {
     let validations = {
       values: {
@@ -223,7 +234,7 @@ export default {
       if (this.existingFieldId !== null) {
         fields = fields.filter((f) => f.id !== this.existingFieldId)
       }
-      return !fields.map((f) => f.name).includes(param.trim())
+      return !fields.map((f) => f.name).includes(param?.trim())
     },
     mustHaveUniqueFieldAPIName(param) {
       let fields = this.fields
@@ -237,7 +248,7 @@ export default {
       return /^[a-z0-9_]+$/.test(param) && param.slice(0) !== "_" && param.slice(-1) !== "_" && !(/__/.test(param))
     },
     mustNotClashWithReservedName(param) {
-      return !RESERVED_BASEROW_FIELD_NAMES.includes(param.trim())
+      return !RESERVED_BASEROW_FIELD_NAMES.includes(param?.trim())
     },
     getFormComponent(type) {
       return this.$registry.get('field', type).getFormComponent()
@@ -253,6 +264,9 @@ export default {
       this.apiNameWarningInterval = setInterval(() => {
         this.api_name_focused = false;
       }, 500);
+    },
+    showFieldTypesDropdown(target) {
+      this.$refs.fieldTypesDropdown.show(target)
     },
   },
 }

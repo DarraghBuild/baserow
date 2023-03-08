@@ -1,5 +1,6 @@
 import { clone } from '@baserow/modules/core/utils/object'
 import { anyFieldsNeedFetch } from '@baserow/modules/database/store/field'
+import { generateHash } from '@baserow/modules/core/utils/hashing'
 
 /**
  * Registers the real time events related to the database module. When a message comes
@@ -34,9 +35,15 @@ export const registerRealtimeEvents = (realtime) => {
   })
 
   realtime.registerEvent('tables_reordered', ({ store, app }, data) => {
-    const database = store.getters['application/get'](data.database_id)
+    const database = store.getters['application/getAll'].find(
+      (application) => generateHash(application.id) === data.database_id
+    )
     if (database !== undefined) {
-      store.commit('table/ORDER_TABLES', { database, order: data.order })
+      store.commit('table/ORDER_TABLES', {
+        database,
+        order: data.order,
+        isHashed: true,
+      })
     }
   })
 
@@ -215,6 +222,14 @@ export const registerRealtimeEvents = (realtime) => {
     }
   })
 
+  realtime.registerEvent('row_orders_recalculated', ({ store, app }, data) => {
+    if (store.getters['table/getSelectedId'] === data.table_id) {
+      app.$bus.$emit('table-refresh', {
+        tableId: store.getters['table/getSelectedId'],
+      })
+    }
+  })
+
   realtime.registerEvent('view_created', ({ store }, data) => {
     if (store.getters['table/getSelectedId'] === data.view.table_id) {
       store.dispatch('view/forceCreate', { data: data.view })
@@ -247,7 +262,7 @@ export const registerRealtimeEvents = (realtime) => {
   realtime.registerEvent('views_reordered', ({ store, app }, data) => {
     const table = store.getters['table/getSelected']
     if (table !== undefined && table.id === data.table_id) {
-      store.commit('view/ORDER_ITEMS', data.order)
+      store.commit('view/ORDER_ITEMS', { order: data.order })
     }
   })
 

@@ -475,7 +475,7 @@ def test_cancel_user_deletion(data_fixture, mailoutbox):
 
 
 @pytest.mark.django_db(transaction=False)
-def test_delete_expired_user(
+def test_delete_expired_users_and_related_groups_if_last_admin(
     data_fixture, mailoutbox, django_capture_on_commit_callbacks
 ):
     user1 = data_fixture.create_user(email="test1@localhost", to_be_deleted=True)
@@ -557,7 +557,9 @@ def test_delete_expired_user(
 
     with freeze_time("2020-01-07 12:00"):
         with django_capture_on_commit_callbacks(execute=True):
-            handler.delete_expired_users(grace_delay=datetime.timedelta(days=3))
+            handler.delete_expired_users_and_related_groups_if_last_admin(
+                grace_delay=datetime.timedelta(days=3)
+            )
 
     user_ids = User.objects.values_list("pk", flat=True)
     assert len(user_ids) == 4
@@ -569,10 +571,10 @@ def test_delete_expired_user(
     assert user6.id in user_ids
 
     group_ids = Group.objects.values_list("pk", flat=True)
-    assert len(group_ids) == 2
+    assert len(group_ids) == 3
     assert groupuser1.group.id not in group_ids
     assert groupuser1_2.group.id not in group_ids
-    assert groupuser1_3.group.id not in group_ids
+    assert groupuser1_3.group.id in group_ids
     assert groupuser2.group.id in group_ids
     assert groupuser4.group.id in group_ids
     assert groupuser4_2.group.id not in group_ids
@@ -588,3 +590,27 @@ def test_delete_expired_user(
     # Check mail sent
     assert len(mailoutbox) == 2
     assert mailoutbox[0].subject == "Account permanently deleted - Baserow"
+
+
+@pytest.mark.django_db
+def test_active_users_qs_excludes_deactivated_users(data_fixture):
+    deactivated_user = data_fixture.create_user(
+        email="test1@localhost", is_active=False
+    )
+    active_user = data_fixture.create_user(email="test2@localhost", is_active=True)
+    assert set(
+        UserHandler().get_all_active_users_qs().values_list("id", flat=True)
+    ) == {active_user.id}
+
+
+@pytest.mark.django_db
+def test_active_users_qs_excludes_pending_deletion_users(data_fixture):
+    user_pending_deletion = data_fixture.create_user(
+        email="test1@localhost", to_be_deleted=True
+    )
+    active_user = data_fixture.create_user(
+        email="test2@localhost", is_active=True, to_be_deleted=False
+    )
+    assert set(
+        UserHandler().get_all_active_users_qs().values_list("id", flat=True)
+    ) == {active_user.id}

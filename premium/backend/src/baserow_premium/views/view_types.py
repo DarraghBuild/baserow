@@ -104,6 +104,7 @@ class KanbanViewType(ViewType):
     def export_serialized(
         self,
         kanban: View,
+        cache: Optional[Dict] = None,
         files_zip: Optional[ZipFile] = None,
         storage: Optional[Storage] = None,
     ):
@@ -111,7 +112,7 @@ class KanbanViewType(ViewType):
         Adds the serialized kanban view options to the exported dict.
         """
 
-        serialized = super().export_serialized(kanban, files_zip, storage)
+        serialized = super().export_serialized(kanban, cache, files_zip, storage)
         if kanban.single_select_field_id:
             serialized["single_select_field_id"] = kanban.single_select_field_id
 
@@ -139,7 +140,7 @@ class KanbanViewType(ViewType):
         id_mapping: Dict[str, Any],
         files_zip: Optional[ZipFile] = None,
         storage: Optional[Storage] = None,
-    ) -> View:
+    ) -> Optional[View]:
         """
         Imports the serialized kanban view field options.
         """
@@ -160,21 +161,22 @@ class KanbanViewType(ViewType):
             table, serialized_copy, id_mapping, files_zip, storage
         )
 
-        if "database_kanban_view_field_options" not in id_mapping:
-            id_mapping["database_kanban_view_field_options"] = {}
+        if kanban_view is not None:
+            if "database_kanban_view_field_options" not in id_mapping:
+                id_mapping["database_kanban_view_field_options"] = {}
 
-        for field_option in field_options:
-            field_option_copy = field_option.copy()
-            field_option_id = field_option_copy.pop("id")
-            field_option_copy["field_id"] = id_mapping["database_fields"][
-                field_option["field_id"]
-            ]
-            field_option_object = KanbanViewFieldOptions.objects.create(
-                kanban_view=kanban_view, **field_option_copy
-            )
-            id_mapping["database_kanban_view_field_options"][
-                field_option_id
-            ] = field_option_object.id
+            for field_option in field_options:
+                field_option_copy = field_option.copy()
+                field_option_id = field_option_copy.pop("id")
+                field_option_copy["field_id"] = id_mapping["database_fields"][
+                    field_option["field_id"]
+                ]
+                field_option_object = KanbanViewFieldOptions.objects.create(
+                    kanban_view=kanban_view, **field_option_copy
+                )
+                id_mapping["database_kanban_view_field_options"][
+                    field_option_id
+                ] = field_option_object.id
 
         return kanban_view
 

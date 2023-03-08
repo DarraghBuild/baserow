@@ -1,14 +1,19 @@
+### What is in this MR
+- E.g. a short explanation of what this MR does.
+
+### How to test this MR
+- E.g. a short series of steps on how to test the features/bug fixes in this MR.
+
 ### Merge Request Checklist
 
-- [ ] [changelog.md](https://gitlab.com/bramw/baserow/-/blob/develop/changelog.md) has
-  been updated if required.
+- [ ] A changelog entry has been added to `changelog/entries/unreleased` using `changelog/src/changelog.py`
 - [ ] New/updated **Premium/Enterprise features** are separated correctly in the premium or enterprise folder
 - [ ] The latest **Chrome and Firefox** have been used to test any new frontend features
 - [ ] [Documentation](https://gitlab.com/bramw/baserow/-/tree/develop/docs) has been
   updated
 - [ ] [Quality Standards](https://gitlab.com/bramw/baserow/-/blob/develop/CONTRIBUTING.md#quality-standards)
   are met
-- [ ] **Performance**: tables are still fast with 100k+ rows, 100+ field tables 
+- [ ] **Performance**: tables are still fast with 100k+ rows, 100+ field tables
 - [ ] The [redoc API pages](https://api.baserow.io/api/redoc/) have been updated for any
   REST API changes
 - [ ] 

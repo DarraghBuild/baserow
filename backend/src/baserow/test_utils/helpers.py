@@ -149,14 +149,18 @@ def setup_interesting_test_table(
         "date_us": date,
         "datetime_eu": datetime,
         "date_eu": date,
+        "datetime_eu_tzone_visible": datetime,
+        "datetime_eu_tzone_hidden": datetime,
         "last_modified_datetime_us": None,
         "last_modified_date_us": None,
         "last_modified_datetime_eu": None,
         "last_modified_date_eu": None,
+        "last_modified_datetime_eu_tzone": None,
         "created_on_datetime_us": None,
         "created_on_date_us": None,
         "created_on_datetime_eu": None,
         "created_on_date_eu": None,
+        "created_on_datetime_eu_tzone": None,
         # We will setup link rows manually later
         "link_row": None,
         "self_link_row": None,
@@ -411,8 +415,8 @@ def assert_undo_redo_actions_are_valid(
         ), f"Action expected of type {expected_action_type} but got {action.type}"
         assert (
             action is not None
-        ), "Action is None, but should be of type {expected_action_type}"
-        assert action.error is None, "Action has error: {action.error}"
+        ), f"Action is None, but should be of type {expected_action_type}"
+        assert action.error is None, f"Action has error: {action.error}"
 
 
 def assert_undo_redo_actions_fails_with_error(
@@ -421,7 +425,7 @@ def assert_undo_redo_actions_fails_with_error(
     assert actions, "Actions list should not be empty"
 
     for action, expected_action_type in zip(actions, expected_action_types):
-        assert action, "Action is None, but should be of type {expected_action_type}"
+        assert action, f"Action is None, but should be of type {expected_action_type}"
         assert action.error is not None, "Action has no error, but should have one"
 
 
@@ -489,3 +493,13 @@ def stub_getaddrinfo(host, port, family=None, socktype=None, proto=None, flags=N
         (AF_INET, SOCK_STREAM, IPPROTO_TCP, host, (ip, port)),
         (AF_INET6, SOCK_STREAM, IPPROTO_TCP, "", (ip, port)),
     ]
+
+
+class AnyInt(int):
+    """
+    A class that can be used to check if a value is an int. Useful in tests when
+    you don't care about ID, but you want to check all other values.
+    """
+
+    def __eq__(self, other):
+        return isinstance(other, int)

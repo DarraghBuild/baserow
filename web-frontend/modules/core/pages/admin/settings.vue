@@ -91,6 +91,33 @@
             </div>
           </div>
         </div>
+        <div class="admin-settings__item">
+          <div class="admin-settings__label">
+            <div class="admin-settings__name">
+              {{ $t('settings.settingAllowNonStaffCreateGroupOperation') }}
+            </div>
+            <div class="admin-settings__description">
+              {{
+                $t(
+                  'settings.settingAllowNonStaffCreateGroupOperationDescription'
+                )
+              }}
+            </div>
+          </div>
+          <div class="admin-settings__control">
+            <SwitchInput
+              :value="settings.allow_global_group_creation"
+              :large="true"
+              @input="updateSettings({ allow_global_group_creation: $event })"
+              >{{ $t('settings.enabled') }}</SwitchInput
+            >
+            <div v-show="settings.allow_global_group_creation" class="warning">
+              {{
+                $t('settings.settingAllowNonStaffCreateGroupOperationWarning')
+              }}
+            </div>
+          </div>
+        </div>
       </div>
       <div class="admin-settings__group">
         <h2 class="admin-settings__group-title">
@@ -118,6 +145,29 @@
             <div v-if="$v.account_deletion_grace_delay.$error" class="error">
               {{ $t('settings.invalidAccountDeletionGraceDelay') }}
             </div>
+          </div>
+        </div>
+      </div>
+      <div class="admin-settings__group">
+        <h2 class="admin-settings__group-title">
+          {{ $t('settings.maintenance') }}
+        </h2>
+        <div class="admin-settings__item">
+          <div class="admin-settings__label">
+            <div class="admin-settings__name">
+              {{ $t('settings.settingTrackGroupUsage') }}
+            </div>
+            <div class="admin-settings__description">
+              {{ $t('settings.settingTrackGroupUsageDescription') }}
+            </div>
+          </div>
+          <div class="admin-settings__control">
+            <SwitchInput
+              :value="settings.track_group_usage"
+              :large="true"
+              @input="updateSettings({ track_group_usage: $event })"
+              >{{ $t('settings.enabled') }}</SwitchInput
+            >
           </div>
         </div>
       </div>

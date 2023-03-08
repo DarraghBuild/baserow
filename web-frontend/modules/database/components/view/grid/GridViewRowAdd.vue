@@ -6,7 +6,8 @@
         :class="{ hover: addHover }"
         @mouseover="setHover(true)"
         @mouseleave="setHover(false)"
-        @click="$emit('add-row')"
+        @click="addRow"
+        @click.right.prevent="addRows"
       >
         <i v-if="includeRowDetails" class="fas fa-plus"></i>
       </a>
@@ -56,6 +57,14 @@ export default {
   methods: {
     setHover(value) {
       this.$store.dispatch(this.storePrefix + 'view/grid/setAddRowHover', value)
+    },
+    addRow(event) {
+      event.preventFieldCellUnselect = true
+      this.$emit('add-row')
+    },
+    addRows(event) {
+      event.preventFieldCellUnselect = true
+      this.$emit('add-rows', event)
     },
   },
 }

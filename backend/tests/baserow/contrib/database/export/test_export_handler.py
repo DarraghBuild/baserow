@@ -24,10 +24,10 @@ from baserow.contrib.database.export.exceptions import (
 from baserow.contrib.database.export.handler import ExportHandler
 from baserow.contrib.database.export.models import (
     EXPORT_JOB_CANCELLED_STATUS,
-    EXPORT_JOB_COMPLETED_STATUS,
     EXPORT_JOB_EXPIRED_STATUS,
     EXPORT_JOB_EXPORTING_STATUS,
     EXPORT_JOB_FAILED_STATUS,
+    EXPORT_JOB_FINISHED_STATUS,
     EXPORT_JOB_PENDING_STATUS,
     ExportJob,
 )
@@ -222,32 +222,31 @@ def test_can_export_every_interesting_different_field_to_csv(
     expected = (
         "\ufeffid,text,long_text,url,email,negative_int,positive_int,"
         "negative_decimal,positive_decimal,rating,boolean,datetime_us,date_us,"
-        "datetime_eu,date_eu,last_modified_datetime_us,last_modified_date_us,"
-        "last_modified_datetime_eu,last_modified_date_eu,created_on_datetime_us,"
-        "created_on_date_us,created_on_datetime_eu,created_on_date_eu,link_row,"
-        "self_link_row,link_row_without_related,decimal_link_row,file_link_row,file,"
-        "single_select,multiple_select,multiple_collaborators,phone_number,"
-        "formula_text,formula_int,formula_bool,formula_decimal,formula_dateinterval,"
+        "datetime_eu,date_eu,datetime_eu_tzone_visible,datetime_eu_tzone_hidden,"
+        "last_modified_datetime_us,last_modified_date_us,last_modified_datetime_eu,"
+        "last_modified_date_eu,last_modified_datetime_eu_tzone,created_on_datetime_us,"
+        "created_on_date_us,created_on_datetime_eu,created_on_date_eu,created_on_datetime_eu_tzone,"
+        "link_row,self_link_row,link_row_without_related,decimal_link_row,"
+        "file_link_row,file,single_select,multiple_select,multiple_collaborators,"
+        "phone_number,formula_text,formula_int,formula_bool,formula_decimal,formula_dateinterval,"
         "formula_date,formula_singleselect,formula_email,formula_link_with_label,"
         "formula_link_url_only,lookup\r\n"
-        "1,,,,,,,,,0,False,,,,,01/02/2021 13:00,01/02/2021,02/01/2021 "
-        "13:00,02/01/2021,01/02/2021 13:00,01/02/2021,02/01/2021 "
-        "13:00,02/01/2021,,,,,,,,,,,test FORMULA,1,True,33.3333333333,1 "
-        "day,2020-01-01,,,label (https://google.com),https://google.com,\r\n"
-        "2,text,long_text,https://www.google.com,test@example.com,-1,1,-1.2,1.2,3,"
-        "True,02/01/2020 "
-        "01:23,02/01/2020,01/02/2020 01:23,01/02/2020,01/02/2021 "
-        "13:00,01/02/2021,02/01/2021 13:00,02/01/2021,01/02/2021 "
-        "13:00,01/02/2021,02/01/2021 "
-        '13:00,02/01/2021,"linked_row_1,linked_row_2,unnamed row 3",unnamed row '
-        '1,"linked_row_1,linked_row_2","1.234,-123.456,unnamed row 3","name.txt '
-        '(http://localhost:8000/media/user_files/test_hash.txt),unnamed row 2","a.txt '
-        "(http://localhost:8000/media/user_files/hashed_name.txt),b.txt "
-        '(http://localhost:8000/media/user_files/other_name.txt)",A,"D,C,E",'
-        '"user2@example.com,user3@example.com",+4412345678,test '
-        "FORMULA,1,True,33.3333333333,1 day,2020-01-01,A,test@example.com,label "
-        '(https://google.com),https://google.com,"linked_row_1,linked_row_2,'
-        '"\r\n'
+        "1,,,,,,,,,0,False,,,,,,,01/02/2021 12:00,01/02/2021,02/01/2021 12:00,02/01/2021,"
+        "02/01/2021 13:00,01/02/2021 12:00,01/02/2021,02/01/2021 12:00,02/01/2021,"
+        "02/01/2021 13:00,,,,,,,,,,,test FORMULA,1,True,33.3333333333,1 day,"
+        "2020-01-01,,,label (https://google.com),https://google.com,\r\n"
+        "2,text,long_text,https://www.google.com,test@example.com,-1,1,-1.2,1.2,3,True,"
+        "02/01/2020 01:23,02/01/2020,01/02/2020 01:23,01/02/2020,01/02/2020 02:23,"
+        "01/02/2020 02:23,01/02/2021 12:00,01/02/2021,02/01/2021 12:00,02/01/2021,"
+        "02/01/2021 13:00,01/02/2021 12:00,01/02/2021,02/01/2021 12:00,02/01/2021,"
+        '02/01/2021 13:00,"linked_row_1,linked_row_2,unnamed row 3",unnamed row 1,'
+        '"linked_row_1,linked_row_2","1.234,-123.456,unnamed row 3",'
+        '"name.txt (http://localhost:8000/media/user_files/test_hash.txt),unnamed row 2",'
+        '"a.txt (http://localhost:8000/media/user_files/hashed_name.txt),'
+        'b.txt (http://localhost:8000/media/user_files/other_name.txt)",A,"D,C,E",'
+        '"user2@example.com,user3@example.com",+4412345678,test FORMULA,1,True,33.3333333333,'
+        "1 day,2020-01-01,A,test@example.com,label (https://google.com),https://google.com,"
+        '"linked_row_1,linked_row_2,"\r\n'
     )
 
     assert contents == expected
@@ -260,6 +259,40 @@ def run_export_job_over_interesting_table(data_fixture, storage_mock, options):
         table, grid_view, storage_mock, user, options
     )
     return contents
+
+
+@pytest.mark.django_db
+@patch("baserow.contrib.database.export.handler.default_storage")
+def test_can_export_special_characters_in_arabic_encoding_to_csv(
+    storage_mock, data_fixture
+):
+    user = data_fixture.create_user()
+    database = data_fixture.create_database_application(user=user)
+    table = data_fixture.create_database_table(database=database)
+    grid_view = data_fixture.create_grid_view(table=table)
+    text_field = data_fixture.create_text_field(user=user, table=table, name="text")
+
+    special_character = "ê"
+    special_character_exported_expected = "\\xea"
+
+    model = table.get_model()
+    model.objects.create(**{f"field_{text_field.id}": special_character})
+
+    job, contents = run_export_job_with_mock_storage(
+        table,
+        grid_view,
+        storage_mock,
+        user,
+        {
+            "exporter_type": "csv",
+            "export_charset": "iso-8859-6",
+        },
+    )
+
+    assert (
+        contents
+        == f"id,{text_field.name}\r\n1,{special_character_exported_expected}\r\n"
+    )
 
 
 @pytest.mark.django_db
@@ -282,9 +315,9 @@ def test_creating_a_new_export_job_will_cancel_any_already_running_jobs_for_that
     )
     first_job.refresh_from_db()
     other_users_job.refresh_from_db()
-    assert first_job.status == EXPORT_JOB_CANCELLED_STATUS
-    assert second_job.status == EXPORT_JOB_PENDING_STATUS
-    assert other_users_job.status == EXPORT_JOB_PENDING_STATUS
+    assert first_job.state == EXPORT_JOB_CANCELLED_STATUS
+    assert second_job.state == EXPORT_JOB_PENDING_STATUS
+    assert other_users_job.state == EXPORT_JOB_PENDING_STATUS
 
 
 @pytest.mark.django_db
@@ -316,10 +349,10 @@ def test_a_complete_export_job_which_has_expired_will_have_its_file_deleted(
         "export_files/" + first_job.exported_file_name
     )
     first_job.refresh_from_db()
-    assert first_job.status == EXPORT_JOB_EXPIRED_STATUS
+    assert first_job.state == EXPORT_JOB_EXPIRED_STATUS
     assert first_job.exported_file_name is None
     second_job.refresh_from_db()
-    assert second_job.status == EXPORT_JOB_COMPLETED_STATUS
+    assert second_job.state == EXPORT_JOB_FINISHED_STATUS
     assert second_job.exported_file_name is not None
 
 
@@ -357,9 +390,9 @@ def test_a_pending_job_which_has_expired_will_be_cleaned_up(
     storage_mock.delete.assert_not_called()
 
     old_pending_job.refresh_from_db()
-    assert old_pending_job.status == EXPORT_JOB_EXPIRED_STATUS
+    assert old_pending_job.state == EXPORT_JOB_EXPIRED_STATUS
     unexpired_other_user_job.refresh_from_db()
-    assert unexpired_other_user_job.status == EXPORT_JOB_PENDING_STATUS
+    assert unexpired_other_user_job.state == EXPORT_JOB_PENDING_STATUS
 
 
 @pytest.mark.django_db
@@ -384,7 +417,7 @@ def test_a_running_export_job_which_has_expired_will_be_stopped(
         long_running_job = handler.create_pending_export_job(
             user, table, None, {"exporter_type": "csv"}
         )
-        long_running_job.status = EXPORT_JOB_EXPORTING_STATUS
+        long_running_job.state = EXPORT_JOB_EXPORTING_STATUS
         long_running_job.save()
     with freeze_time(second_job_start):
         unexpired_other_user_job = handler.create_pending_export_job(
@@ -396,9 +429,9 @@ def test_a_running_export_job_which_has_expired_will_be_stopped(
     storage_mock.delete.assert_not_called()
 
     long_running_job.refresh_from_db()
-    assert long_running_job.status == EXPORT_JOB_EXPIRED_STATUS
+    assert long_running_job.state == EXPORT_JOB_EXPIRED_STATUS
     unexpired_other_user_job.refresh_from_db()
-    assert unexpired_other_user_job.status == EXPORT_JOB_PENDING_STATUS
+    assert unexpired_other_user_job.state == EXPORT_JOB_PENDING_STATUS
 
 
 @pytest.mark.django_db
@@ -533,7 +566,7 @@ def test_an_export_job_which_fails_will_be_marked_as_a_failed_job(
         handler.run_export_job(job_which_fails)
 
     job_which_fails.refresh_from_db()
-    assert job_which_fails.status == EXPORT_JOB_FAILED_STATUS
+    assert job_which_fails.state == EXPORT_JOB_FAILED_STATUS
     assert job_which_fails.error == "Failed"
     table_exporter_registry.unregister("broken")
 
@@ -827,3 +860,29 @@ def test_a_column_without_a_grid_view_option_has_an_option_made_and_is_exported(
 
     assert GridViewFieldOptions.objects.count() == 2
     assert GridViewFieldOptions.objects.filter(field=field_without_an_option).exists()
+
+
+@pytest.mark.django_db
+@patch("baserow.contrib.database.export.handler.default_storage")
+def test_action_done_is_emitted_when_the_export_finish(storage_mock, data_fixture):
+    user = data_fixture.create_user()
+    table = data_fixture.create_database_table(user=user)
+
+    with patch("baserow.core.action.signals.action_done.send") as send_mock:
+
+        run_export_job_with_mock_storage(table, None, storage_mock, user)
+
+        assert send_mock.call_count == 1
+        assert send_mock.call_args[1]["action_type"].type == "export_table"
+        action_type = send_mock.call_args[1]["action_type"]
+        params = send_mock.call_args[1]["action_params"]
+        assert action_type.get_long_description(params).startswith("Table")
+
+        grid_view = GridView.objects.create(table=table, order=0, name="grid_view")
+        run_export_job_with_mock_storage(table, grid_view, storage_mock, user)
+
+        assert send_mock.call_count == 2
+        assert send_mock.call_args[1]["action_type"].type == "export_table"
+        action_type = send_mock.call_args[1]["action_type"]
+        params = send_mock.call_args[1]["action_params"]
+        assert action_type.get_long_description(params).startswith("View")

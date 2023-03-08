@@ -8,20 +8,10 @@
       :is="applicationType.getApplicationFormComponent()"
       ref="applicationForm"
       :default-name="getDefaultName()"
+      :loading="loading"
       @submitted="submitted"
       @hidden="hide()"
     >
-      <div class="actions">
-        <div class="align-right">
-          <button
-            class="button button--large"
-            :class="{ 'button--loading': loading }"
-            :disabled="loading"
-          >
-            {{ $t('action.add') }} {{ applicationType.getName() | lowercase }}
-          </button>
-        </div>
-      </div>
     </component>
   </Modal>
 </template>
@@ -69,14 +59,16 @@ export default {
         })
         this.$emit('created', application)
         // select the application just created in the sidebar and open it
-        await this.$store.dispatch('application/select', application)
-        await this.$registry
+        await this.$store.dispatch('application/selectById', application.id)
+        this.$registry
           .get('application', application.type)
           .select(application, this, () => {
             this.hide()
           })
       } catch (error) {
         this.handleError(error, 'application')
+      } finally {
+        this.loading = false
       }
     },
   },
