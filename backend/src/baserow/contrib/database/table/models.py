@@ -43,8 +43,11 @@ from baserow.core.mixins import (
 from baserow.core.telemetry.utils import baserow_trace
 from baserow.core.utils import split_comma_separated_string
 
-deconstruct_filter_key_regex = re.compile(
+deconstruct_filter_key_regex_id = re.compile(
     r"filter__field_([0-9]+|created_on|updated_on)__([a-zA-Z0-9_]*)$"
+)
+deconstruct_filter_key_regex_api_name = re.compile(
+    r"filter__([a-z0-9](?:[a-z0-9]|[a-z0-9_][a-z0-9])*)__([a-zA-Z0-9_]*)$"
 )
 
 tracer = trace.get_tracer(__name__)
@@ -287,10 +290,16 @@ class TableModelQuerySet(models.QuerySet):
         filter_builder = FilterBuilder(filter_type=filter_type)
 
         for key, values in filter_object.items():
-            matches = deconstruct_filter_key_regex.match(key)
+            matches = deconstruct_filter_key_regex_id.match(key)
 
+            is_api_name = False
             if not matches:
-                continue
+                matches = deconstruct_filter_key_regex_api_name.match(key)
+
+                if not matches:
+                    continue
+
+                is_api_name = True
 
             fixed_field_instance_mapping = {
                 "created_on": CreatedOnField(),
@@ -301,7 +310,15 @@ class TableModelQuerySet(models.QuerySet):
                 field_name = matches[1]
                 field_instance = fixed_field_instance_mapping.get(field_name)
             else:
-                field_id = int(matches[1])
+                if is_api_name:
+                    field_api_name = matches[1]
+                    field_id = next((obj_id for obj_id, obj in self.model._field_objects.items() if obj["field"] and obj["field"].api_name == field_api_name), None)
+                    if field_id is None:
+                        raise FilterFieldNotFound(
+                            field_api_name, f"Field {field_api_name} does not exist."
+                        )
+                else:
+                    field_id = int(matches[1])
 
                 if field_id not in self.model._field_objects or (
                     only_filter_by_field_ids is not None
