@@ -151,7 +151,7 @@ def snapshot(parser, args):
 
             time.sleep(2)
             
-            if res.status_code != 200:
+            if res.status_code >= 400:
                 print(f"Error {res.status_code}: {res.text}")
 
 def export_data(parser, args):
