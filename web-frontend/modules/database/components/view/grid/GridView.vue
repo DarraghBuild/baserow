@@ -853,11 +853,9 @@ export default {
       })
     },
     /**
-     * This method is called when the next cell must be selected. This can for example
-     * happen when the tab key is pressed. It tries to find the next field based on the
-     * direction and will select that one.
+     * This method returns the row id and field id of the cell that is adjacent to the given cell in the given direction.
      */
-    selectNextCell({ row, field, direction = 'next' }) {
+    getAdjacentCell({ row, field, direction = 'next' }) {
       const fields = this.allVisibleFields
       let nextFieldId = -1
       let nextRowId = -1
@@ -896,6 +894,23 @@ export default {
       }
 
       if (nextFieldId === -1 || nextRowId === -1) {
+        return null
+      }
+
+      return {
+        rowId: nextRowId,
+        fieldId: nextFieldId,
+      }
+    },
+    /**
+     * This method is called when the next cell must be selected. This can for example
+     * happen when the tab key is pressed. It tries to find the next field based on the
+     * direction and will select that one.
+     */
+    selectNextCell({ row, field, direction = 'next' }) {
+      const nextCell = this.getAdjacentCell({ row, field, direction })
+
+      if (!nextCell) {
         return
       }
 
@@ -903,9 +918,12 @@ export default {
         this.storePrefix + 'view/grid/clearAndDisableMultiSelect'
       )
 
-      this.$store.dispatch(this.storePrefix + 'view/grid/setSelectedCell', {
-        rowId: nextRowId,
-        fieldId: nextFieldId,
+      this.$store.dispatch(this.storePrefix + 'view/grid/setSelectedCell', nextCell)
+
+      this.$store.dispatch(this.storePrefix + 'view/grid/multiSelectStart', {
+        rowId: nextCell.rowId,
+        fieldIndex: this.visibleFields.findIndex((f) => f.id === nextCell.fieldId) + 1,
+        isMouse: false,
       })
     },
     /**
@@ -928,10 +946,21 @@ export default {
      * selected cell.
      */
     multiSelectStart({ event, row, field }) {
-      this.$store.dispatch(this.storePrefix + 'view/grid/multiSelectStart', {
-        rowId: row.id,
-        fieldIndex: this.visibleFields.findIndex((f) => f.id === field.id) + 1,
-      })
+      if (event.shiftKey && (this.$store.getters[this.storePrefix + 'view/grid/isMultiSelectActive'] || this.$store.getters[this.storePrefix + 'view/grid/isSingleCellSelected'])) {
+        this.$store.dispatch(
+          this.storePrefix + 'view/grid/setMultiSelectHolding',
+          true
+        )
+        this.$store.dispatch(this.storePrefix + 'view/grid/multiSelectHold', {
+          rowId: row.id,
+          fieldIndex: this.visibleFields.findIndex((f) => f.id === field.id) + 1,
+        })
+      } else {
+        this.$store.dispatch(this.storePrefix + 'view/grid/multiSelectStart', {
+          rowId: row.id,
+          fieldIndex: this.visibleFields.findIndex((f) => f.id === field.id) + 1,
+        })
+      }
     },
     /**
      * Called when mouse hovers over a GridViewCell component.
@@ -940,6 +969,17 @@ export default {
      */
     multiSelectHold({ event, row, field }) {
       this.$store.dispatch(this.storePrefix + 'view/grid/multiSelectHold', {
+        rowId: row.id,
+        fieldIndex: this.visibleFields.findIndex((f) => f.id === field.id) + 1,
+      })
+    },
+    /**
+     * Called when shift + arrow keys are pressed.
+     * Updates the current multi-select grid by updating the tail index
+     * with the cell in the proper direction.
+     */
+    multiSelectExtend({ event, row, field }) {
+      this.$store.dispatch(this.storePrefix + 'view/grid/multiSelectExtend', {
         rowId: row.id,
         fieldIndex: this.visibleFields.findIndex((f) => f.id === field.id) + 1,
       })
@@ -961,9 +1001,8 @@ export default {
      */
     cancelMultiSelectIfActive(event) {
       if (
-        this.$store.getters[
-          this.storePrefix + 'view/grid/isMultiSelectActive'
-        ] &&
+        !event.shiftKey &&
+        this.$store.getters[this.storePrefix + 'view/grid/isMultiSelectActive'] &&
         (!isElement(this.$el, event.target) ||
           !['grid-view__row', 'grid-view__rows', 'grid-view'].includes(
             event.target.classList[0]
@@ -975,23 +1014,43 @@ export default {
       }
     },
     keyDownEvent(event) {
-      if (
-        this.$store.getters[this.storePrefix + 'view/grid/isMultiSelectActive']
-      ) {
-        // Check if arrow key was pressed.
-        if (
-          ['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown'].includes(
-            event.key
-          )
-        ) {
-          // Cancels multi-select if it's currently active.
-          this.$store.dispatch(
-            this.storePrefix + 'view/grid/clearAndDisableMultiSelect'
-          )
+      // Check if arrow key was pressed.
+      if ([ 'ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown' ].includes(event.key)) {
+        if (event.shiftKey && (this.$store.getters[this.storePrefix + 'view/grid/isMultiSelectActive'] || this.$store.getters[this.storePrefix + 'view/grid/isSingleCellSelected'])) {
+          const currentCell = {
+            row: this.$store.getters[this.storePrefix + 'view/grid/getRowByIndex'](this.$store.getters[this.storePrefix + 'view/grid/getMultiSelectTailRowIndexInternal']),
+            field: this.allVisibleFields[this.$store.getters[this.storePrefix + 'view/grid/getMultiSelectTailFieldIndexInternal']],
+          }
+
+          if (!currentCell.row || !currentCell.field) {
+            return
+          }
+
+          const nextCell = this.getAdjacentCell({
+            ...currentCell,
+            direction: {
+              ArrowRight: 'next',
+              ArrowLeft: 'previous',
+              ArrowUp: 'above',
+              ArrowDown: 'below',
+            }[event.key],
+          })
+
+          this.multiSelectExtend({
+            event,
+            row: { id: nextCell.rowId },
+            field: { id: nextCell.fieldId },
+          })
         }
-        if (event.key === 'Backspace' || event.key === 'Delete') {
-          this.clearValuesFromMultipleCellSelection()
+        else if (this.$store.getters[this.storePrefix + 'view/grid/isMultiSelectActive']) {
+            // Cancels multi-select if it's currently active.
+            this.$store.dispatch(
+              this.storePrefix + 'view/grid/clearAndDisableMultiSelect'
+            )
         }
+      }
+      else if (event.key === 'Backspace' || event.key === 'Delete') {
+        this.clearValuesFromMultipleCellSelection()
       }
     },
     /**

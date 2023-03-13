@@ -104,9 +104,9 @@
         @selected="$emit('selected', $event)"
         @unselected="$emit('unselected', $event)"
         @select-next="$emit('select-next', $event)"
-        @cell-mousedown-left="$emit('cell-mousedown-left', { row, field })"
-        @cell-mouseover="$emit('cell-mouseover', { row, field })"
-        @cell-mouseup-left="$emit('cell-mouseup-left', { row, field })"
+        @cell-mousedown-left="$emit('cell-mousedown-left', { event: $event, row, field })"
+        @cell-mouseover="$emit('cell-mouseover', { event: $event, row, field })"
+        @cell-mouseup-left="$emit('cell-mouseup-left', { event: $event, row, field })"
         @add-row-after="$emit('add-row-after', $event)"
       ></GridViewCell>
     </div>

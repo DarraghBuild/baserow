@@ -149,17 +149,17 @@ export default {
     },
     cellMouseDownLeft(event, listeners) {
       if (listeners['cell-mousedown-left']) {
-        listeners['cell-mousedown-left']()
+        listeners['cell-mousedown-left'](event)
       }
     },
     cellMouseover(event, listeners) {
       if (listeners['cell-mouseover']) {
-        listeners['cell-mouseover']()
+        listeners['cell-mouseover'](event)
       }
     },
     cellMouseUpLeft(event, listeners) {
       if (listeners['cell-mouseup-left']) {
-        listeners['cell-mouseup-left']()
+        listeners['cell-mouseup-left'](event)
       }
     },
     /**

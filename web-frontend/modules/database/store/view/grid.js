@@ -106,6 +106,7 @@ export const state = () => ({
   // have any matching cells will still be displayed.
   hideRowsNotMatchingSearch: true,
   fieldAggregationData: {},
+  singleCellSelected: false,
 })
 
 export const mutations = {
@@ -279,6 +280,9 @@ export const mutations = {
         row._.selectedFieldId = fieldId
       }
     })
+  },
+  SET_SINGLE_CELL_SELECTED(state, value) {
+    state.singleCellSelected = value
   },
   UPDATE_MULTISELECT(state, { position, rowIndex, fieldIndex }) {
     if (position === 'head') {
@@ -1183,6 +1187,9 @@ export const actions = {
   },
   setSelectedCell({ commit }, { rowId, fieldId }) {
     commit('SET_SELECTED_CELL', { rowId, fieldId })
+    if (rowId < 0 && fieldId < 0) {
+      commit('SET_SINGLE_CELL_SELECTED', false)
+    }
   },
   setMultiSelectHolding({ commit }, value) {
     commit('SET_MULTISELECT_HOLDING', value)
@@ -1194,7 +1201,7 @@ export const actions = {
     commit('CLEAR_MULTISELECT')
     commit('SET_MULTISELECT_ACTIVE', false)
   },
-  multiSelectStart({ getters, commit }, { rowId, fieldIndex }) {
+  multiSelectStart({ getters, commit }, { rowId, fieldIndex, isMouse = true }) {
     commit('CLEAR_MULTISELECT')
 
     const rowIndex = getters.getRowIndexById(rowId)
@@ -1202,8 +1209,12 @@ export const actions = {
     commit('UPDATE_MULTISELECT', { position: 'head', rowIndex, fieldIndex })
     commit('UPDATE_MULTISELECT', { position: 'tail', rowIndex, fieldIndex })
 
+    commit('SET_SINGLE_CELL_SELECTED', true)
+
     // Update the store to show that the mouse is being held for multi-select
-    commit('SET_MULTISELECT_HOLDING', true)
+    if (isMouse) {
+      commit('SET_MULTISELECT_HOLDING', true)
+    }
     // Do not enable multi-select if only a single cell is selected
     commit('SET_MULTISELECT_ACTIVE', false)
   },
@@ -1211,6 +1222,22 @@ export const actions = {
     if (getters.isMultiSelectHolding) {
       // Unselect single cell
       commit('SET_SELECTED_CELL', { rowId: -1, fieldId: -1 })
+      commit('SET_SINGLE_CELL_SELECTED', false)
+
+      commit('UPDATE_MULTISELECT', {
+        position: 'tail',
+        rowIndex: getters.getRowIndexById(rowId),
+        fieldIndex,
+      })
+
+      commit('SET_MULTISELECT_ACTIVE', true)
+    }
+  },
+  multiSelectExtend({ getters, commit }, { rowId, fieldIndex }) {
+    if (getters.isSingleCellSelected || getters.isMultiSelectActive) {
+      // Unselect single cell
+      commit('SET_SELECTED_CELL', { rowId: -1, fieldId: -1 })
+      commit('SET_SINGLE_CELL_SELECTED', false)
 
       commit('UPDATE_MULTISELECT', {
         position: 'tail',
@@ -1723,6 +1750,7 @@ export const actions = {
     // Unselect a single selected cell because we've just updated the multiple
     // selected and we don't want that to conflict.
     commit('SET_SELECTED_CELL', { rowId: -1, fieldId: -1 })
+    commit('SET_SINGLE_CELL_SELECTED', false)
   },
   /**
    * This action is used by the grid view to change multiple cells when pasting
@@ -2317,6 +2345,9 @@ export const getters = {
   getRow: (state) => (id) => {
     return state.rows.find((row) => row.id === id)
   },
+  getRowByIndex: (state) => (index) => {
+    return state.rows[index]
+  },
   getRows(state) {
     return state.rows.slice(state.rowsStartIndex, state.rowsEndIndex)
   },
@@ -2377,6 +2408,9 @@ export const getters = {
     })
     return order
   },
+  isSingleCellSelected(state) {
+    return state.singleCellSelected
+  },
   isMultiSelectActive(state) {
     return state.multiSelectActive
   },
@@ -2408,12 +2442,38 @@ export const getters = {
       state.multiSelectTailFieldIndex
     )
   },
+  getMultiSelectHeadFieldIndexInternal(state) {
+      return state.multiSelectHeadFieldIndex
+  },
   getMultiSelectHeadRowIndex(state) {
     // Return the topmost
     return Math.min(
       state.multiSelectHeadRowIndex,
       state.multiSelectTailRowIndex
     )
+  },
+  getMultiSelectHeadRowIndexInternal(state) {
+      return state.multiSelectHeadRowIndex
+  },
+  getMultiSelectTailFieldIndex(state) {
+    // Return the leftmost
+    return Math.max(
+      state.multiSelectHeadFieldIndex,
+      state.multiSelectTailFieldIndex
+    )
+  },
+  getMultiSelectTailFieldIndexInternal(state) {
+      return state.multiSelectTailFieldIndex
+  },
+  getMultiSelectTailRowIndex(state) {
+    // Return the topmost
+    return Math.max(
+      state.multiSelectHeadRowIndex,
+      state.multiSelectTailRowIndex
+    )
+  },
+  getMultiSelectTailRowIndexInternal(state) {
+      return state.multiSelectTailRowIndex
   },
   // Get the index of a row given it's row id.
   // This will calculate the row index from the current buffer position and offset.
