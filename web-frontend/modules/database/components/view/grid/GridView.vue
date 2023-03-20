@@ -907,11 +907,15 @@ export default {
      * happen when the tab key is pressed. It tries to find the next field based on the
      * direction and will select that one.
      */
-    selectNextCell({ row, field, direction = 'next' }) {
-      const nextCell = this.getAdjacentCell({ row, field, direction })
+    selectNextCell({ row, field, direction = 'next', fallbackCell = null }) {
+      let nextCell = this.getAdjacentCell({ row, field, direction })
 
       if (!nextCell) {
-        return
+        nextCell = fallbackCell
+      }
+
+      if (!nextCell) {
+        return false
       }
 
       this.$store.dispatch(
@@ -925,6 +929,8 @@ export default {
         fieldIndex: this.visibleFields.findIndex((f) => f.id === nextCell.fieldId) + 1,
         isMouse: false,
       })
+
+      return true
     },
     /**
      * This method is called from the parent component when the data in the view has
@@ -1016,6 +1022,13 @@ export default {
     keyDownEvent(event) {
       // Check if arrow key was pressed.
       if ([ 'ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown' ].includes(event.key)) {
+        const direction = {
+          ArrowRight: 'next',
+          ArrowLeft: 'previous',
+          ArrowUp: 'above',
+          ArrowDown: 'below',
+        }[event.key]
+
         if (event.shiftKey && (this.$store.getters[this.storePrefix + 'view/grid/isMultiSelectActive'] || this.$store.getters[this.storePrefix + 'view/grid/isSingleCellSelected'])) {
           const currentCell = {
             row: this.$store.getters[this.storePrefix + 'view/grid/getRowByIndex'](this.$store.getters[this.storePrefix + 'view/grid/getMultiSelectTailRowIndexInternal']),
@@ -1028,25 +1041,33 @@ export default {
 
           const nextCell = this.getAdjacentCell({
             ...currentCell,
-            direction: {
-              ArrowRight: 'next',
-              ArrowLeft: 'previous',
-              ArrowUp: 'above',
-              ArrowDown: 'below',
-            }[event.key],
+            direction
           })
 
-          this.multiSelectExtend({
-            event,
-            row: { id: nextCell.rowId },
-            field: { id: nextCell.fieldId },
-          })
+          if (nextCell)
+          {
+            this.multiSelectExtend({
+              event,
+              row: { id: nextCell.rowId },
+              field: { id: nextCell.fieldId },
+            })
+          }
         }
         else if (this.$store.getters[this.storePrefix + 'view/grid/isMultiSelectActive']) {
-            // Cancels multi-select if it's currently active.
-            this.$store.dispatch(
-              this.storePrefix + 'view/grid/clearAndDisableMultiSelect'
-            )
+          // Cancels multi-select if it's currently active.
+          const headCell = {
+            row: this.$store.getters[this.storePrefix + 'view/grid/getRowByIndex'](this.$store.getters[this.storePrefix + 'view/grid/getMultiSelectHeadRowIndexInternal']),
+            field: this.allVisibleFields[this.$store.getters[this.storePrefix + 'view/grid/getMultiSelectHeadFieldIndexInternal']],
+          }
+
+          this.selectNextCell({
+            ...headCell,
+            direction,
+            fallbackCell: {
+              rowId: headCell.row.id,
+              fieldId: headCell.field.id
+            }
+          })
         }
       }
       else if (event.key === 'Backspace' || event.key === 'Delete') {

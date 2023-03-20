@@ -145,7 +145,7 @@ export default {
      */
     select(event, parent, fieldId) {
       event.preventFieldCellUnselect = true
-      parent.selectCell(fieldId)
+      parent.selectCell(event, fieldId)
     },
     cellMouseDownLeft(event, listeners) {
       if (listeners['cell-mousedown-left']) {
@@ -167,7 +167,7 @@ export default {
      */
     unselect(parent, props) {
       if (parent.isCellSelected(props.field.id)) {
-        parent.selectCell(-1, -1)
+        parent.selectCell(null, -1, -1)
       }
     },
     /**

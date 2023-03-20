@@ -1187,9 +1187,7 @@ export const actions = {
   },
   setSelectedCell({ commit }, { rowId, fieldId }) {
     commit('SET_SELECTED_CELL', { rowId, fieldId })
-    if (rowId < 0 && fieldId < 0) {
-      commit('SET_SINGLE_CELL_SELECTED', false)
-    }
+    commit('SET_SINGLE_CELL_SELECTED', !(rowId < 0 && fieldId < 0))
   },
   setMultiSelectHolding({ commit }, value) {
     commit('SET_MULTISELECT_HOLDING', value)
@@ -1208,8 +1206,6 @@ export const actions = {
     // Set the head and tail index to highlight the first cell
     commit('UPDATE_MULTISELECT', { position: 'head', rowIndex, fieldIndex })
     commit('UPDATE_MULTISELECT', { position: 'tail', rowIndex, fieldIndex })
-
-    commit('SET_SINGLE_CELL_SELECTED', true)
 
     // Update the store to show that the mouse is being held for multi-select
     if (isMouse) {
