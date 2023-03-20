@@ -145,21 +145,21 @@ export default {
      */
     select(event, parent, fieldId) {
       event.preventFieldCellUnselect = true
-      parent.selectCell(fieldId)
+      parent.selectCell(event, fieldId)
     },
     cellMouseDownLeft(event, listeners) {
       if (listeners['cell-mousedown-left']) {
-        listeners['cell-mousedown-left']()
+        listeners['cell-mousedown-left'](event)
       }
     },
     cellMouseover(event, listeners) {
       if (listeners['cell-mouseover']) {
-        listeners['cell-mouseover']()
+        listeners['cell-mouseover'](event)
       }
     },
     cellMouseUpLeft(event, listeners) {
       if (listeners['cell-mouseup-left']) {
-        listeners['cell-mouseup-left']()
+        listeners['cell-mouseup-left'](event)
       }
     },
     /**
@@ -167,7 +167,7 @@ export default {
      */
     unselect(parent, props) {
       if (parent.isCellSelected(props.field.id)) {
-        parent.selectCell(-1, -1)
+        parent.selectCell(null, -1, -1)
       }
     },
     /**

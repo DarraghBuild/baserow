@@ -52,7 +52,7 @@ export default {
         return
       }
 
-      parent.selectCell(props.field.id)
+      parent.selectCell(null, props.field.id)
       parent.setState({})
       parent.$nextTick(() => {
         parent.$refs.selectedField.onDrop(event)

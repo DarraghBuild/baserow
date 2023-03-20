@@ -104,9 +104,9 @@
         @selected="$emit('selected', $event)"
         @unselected="$emit('unselected', $event)"
         @select-next="$emit('select-next', $event)"
-        @cell-mousedown-left="$emit('cell-mousedown-left', { row, field })"
-        @cell-mouseover="$emit('cell-mouseover', { row, field })"
-        @cell-mouseup-left="$emit('cell-mouseup-left', { row, field })"
+        @cell-mousedown-left="$emit('cell-mousedown-left', { event: $event, row, field })"
+        @cell-mouseover="$emit('cell-mouseover', { event: $event, row, field })"
+        @cell-mouseup-left="$emit('cell-mouseup-left', { event: $event, row, field })"
         @add-row-after="$emit('add-row-after', $event)"
       ></GridViewCell>
     </div>
@@ -254,11 +254,14 @@ export default {
     isCellSelected(fieldId) {
       return this.row._.selected && this.row._.selectedFieldId === fieldId
     },
-    selectCell(fieldId, rowId = this.row.id) {
-      this.$store.dispatch(this.storePrefix + 'view/grid/setSelectedCell', {
-        rowId,
-        fieldId,
-      })
+    selectCell(event, fieldId, rowId = this.row.id) {
+      if (!(event?.shiftKey && (this.$store.getters[this.storePrefix + 'view/grid/isMultiSelectActive'] || this.$store.getters[this.storePrefix + 'view/grid/isSingleCellSelected'])))
+      {
+        this.$store.dispatch(this.storePrefix + 'view/grid/setSelectedCell', {
+          rowId,
+          fieldId,
+        })
+      }
     },
     // Return an object that represents if a cell is selected,
     // and it's current position in the selection grid
